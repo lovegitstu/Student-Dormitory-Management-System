@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.springboot.dorm.mapper.DormFloorMapper">
+    
+    <resultMap type="DormFloor" id="DormFloorResult">
+        <result property="fId"    column="f_id"    />
+        <result property="fName"    column="f_name"    />
+        <result property="fNumber"    column="f_number"    />
+        <result property="fType"    column="f_type"    />
+        <result property="fDormnumber"    column="f_dormnumber"    />
+<!--        <result property="createBy"    column="create_by"    />-->
+<!--        <result property="createTime"    column="create_time"    />-->
+<!--        <result property="updateBy"    column="update_by"    />-->
+<!--        <result property="updateTime"    column="update_time"    />-->
+    </resultMap>
+
+    <sql id="selectDormFloorVo">
+        select f_id, f_name, f_number, f_type, f_dormnumber, create_by, create_time, update_by, update_time from dorm_floor
+    </sql>
+
+    <select id="selectDormFloorList" parameterType="DormFloor" resultMap="DormFloorResult">
+        <include refid="selectDormFloorVo"/>
+        <where>  
+            <if test="fName != null  and fName != ''"> and f_name like concat('%', #{fName}, '%')</if>
+            <if test="fNumber != null "> and f_number = #{fNumber}</if>
+            <if test="fType != null  and fType != ''"> and f_type = #{fType}</if>
+        </where>
+    </select>
+    
+    <select id="selectDormFloorByFId" parameterType="Long" resultMap="DormFloorResult">
+        <include refid="selectDormFloorVo"/>
+        where f_id = #{fId}
+    </select>
+        
+    <insert id="insertDormFloor" parameterType="DormFloor">
+        insert into dorm_floor
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="fId != null">f_id,</if>
+            <if test="fName != null">f_name,</if>
+            <if test="fNumber != null">f_number,</if>
+            <if test="fType != null">f_type,</if>
+            <if test="fDormnumber != null">f_dormnumber,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="fId != null">#{fId},</if>
+            <if test="fName != null">#{fName},</if>
+            <if test="fNumber != null">#{fNumber},</if>
+            <if test="fType != null">#{fType},</if>
+            <if test="fDormnumber != null">#{fDormnumber},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateDormFloor" parameterType="DormFloor">
+        update dorm_floor
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="fName != null">f_name = #{fName},</if>
+            <if test="fNumber != null">f_number = #{fNumber},</if>
+            <if test="fType != null">f_type = #{fType},</if>
+            <if test="fDormnumber != null">f_dormnumber = #{fDormnumber},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where f_id = #{fId}
+    </update>
+
+    <delete id="deleteDormFloorByFId" parameterType="Long">
+        delete from dorm_floor where f_id = #{fId}
+    </delete>
+
+    <delete id="deleteDormFloorByFIds" parameterType="String">
+        delete from dorm_floor where f_id in 
+        <foreach item="fId" collection="array" open="(" separator="," close=")">
+            #{fId}
+        </foreach>
+    </delete>
+
+    <!-- 统计楼层总数 -->
+    <select id="countTotalFloors" resultType="java.lang.Integer">
+        select count(*) from dorm_floor
+    </select>
+
+    <!-- 根据管理员ID查询楼层ID列表 -->
+    <select id="selectFloorIdsByManagerId" parameterType="java.lang.Long" resultType="java.lang.Long">
+        select f_id from dorm_floor where manager_id = #{managerId}
+    </select>
+
+    <!-- 查询各楼层入住率统计 -->
+    <select id="selectOccupancyByFloor" resultType="java.util.Map">
+        select 
+            df.f_name as floorName,
+            df.f_id as floorId,
+            count(distinct dr.dor_id) as totalRooms,
+            count(db.bed_id) as totalBeds,
+            sum(case when db.stu_id is not null then 1 else 0 end) as occupiedBeds,
+            case 
+                when count(db.bed_id) = 0 then 0.0
+                else round(sum(case when db.stu_id is not null then 1 else 0 end) * 100.0 / count(db.bed_id), 2)
+            end as occupancyRate
+        from dorm_floor df
+        left join dorm_dormitory dr on df.f_id = dr.f_id
+        left join dorm_bed db on dr.dor_id = db.room_id
+        group by df.f_id, df.f_name
+        order by df.f_id
+    </select>
+</mapper>

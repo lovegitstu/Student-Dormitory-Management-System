@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.springboot.dorm.mapper.DormTurnOutMapper">
+    
+    <resultMap type="DormTurnOut" id="DormTurnOutResult">
+        <result property="id"    column="id"    />
+        <result property="stuId"    column="stu_id"    />
+        <result property="excuse"    column="excuse"    />
+        <result property="toDatetime"    column="to_datetime"    />
+        <result property="approvalStatus"    column="approval_status"    />
+        <result property="status"    column="status"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+        <result property="stuName"    column="stu_name"    />
+        <result property="fId"    column="f_id"    />
+        <result property="dorId"    column="dor_id"    />
+        <association property="dormFloor" javaType="dormFloor" resultMap="com.springboot.dorm.mapper.DormFloorMapper.DormFloorResult"></association>
+        <association property="dormDormitory" javaType="dormDormitory" resultMap="com.springboot.dorm.mapper.DormDormitoryMapper.DormDormitoryResult"></association>
+    </resultMap>
+
+    <sql id="selectDormTurnOutVo">
+        select dto.*, ds.stu_name, ds.f_id, ds.dor_id, df.*, dd.* 
+        from dorm_turn_out dto
+        left join dorm_student ds on ds.stu_id = dto.stu_id
+        left join dorm_floor df on df.f_id = ds.f_id
+        left join dorm_dormitory dd on dd.dor_id = ds.dor_id
+    </sql>
+
+    <select id="selectDormTurnOutList" parameterType="DormTurnOut" resultMap="DormTurnOutResult">
+        <include refid="selectDormTurnOutVo"/>
+        <where>  
+            <if test="stuId != null "> and dto.stu_id = #{stuId}</if>
+            <if test="excuse != null  and excuse != ''"> and dto.excuse like concat('%', #{excuse}, '%')</if>
+            <if test="approvalStatus != null  and approvalStatus != ''"> and dto.approval_status = #{approvalStatus}</if>
+            <if test="status != null  and status != ''"> and dto.status = #{status}</if>
+            <if test="toDatetime != null "> and dto.to_datetime = #{toDatetime}</if>
+        </where>
+    </select>
+    
+    <select id="selectDormTurnOutById" parameterType="Long" resultMap="DormTurnOutResult">
+        <include refid="selectDormTurnOutVo"/>
+        where id = #{id}
+    </select>
+        
+    <insert id="insertDormTurnOut" parameterType="DormTurnOut" useGeneratedKeys="true" keyProperty="id">
+        insert into dorm_turn_out
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="stuId != null">stu_id,</if>
+            <if test="excuse != null and excuse != ''">excuse,</if>
+            <if test="toDatetime != null">to_datetime,</if>
+            <if test="approvalStatus != null">approval_status,</if>
+            <if test="status != null">status,</if>
+            <if test="delFlag != null">del_flag,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="stuId != null">#{stuId},</if>
+            <if test="excuse != null and excuse != ''">#{excuse},</if>
+            <if test="toDatetime != null">#{toDatetime},</if>
+            <if test="approvalStatus != null">#{approvalStatus},</if>
+            <if test="status != null">#{status},</if>
+            <if test="delFlag != null">#{delFlag},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateDormTurnOut" parameterType="DormTurnOut">
+        update dorm_turn_out
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="stuId != null">stu_id = #{stuId},</if>
+            <if test="excuse != null and excuse != ''">excuse = #{excuse},</if>
+            <if test="toDatetime != null">to_datetime = #{toDatetime},</if>
+            <if test="approvalStatus != null">approval_status = #{approvalStatus},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="delFlag != null">del_flag = #{delFlag},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteDormTurnOutById" parameterType="Long">
+        delete from dorm_turn_out where id = #{id}
+    </delete>
+
+    <delete id="deleteDormTurnOutByIds" parameterType="String">
+        delete from dorm_turn_out where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

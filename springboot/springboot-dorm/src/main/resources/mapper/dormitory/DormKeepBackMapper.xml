@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.springboot.dorm.mapper.DormKeepBackMapper">
+    
+    <resultMap type="DormKeepBack" id="DormKeepBackResult">
+        <result property="kbId"    column="kb_id"    />
+        <result property="kbReason"    column="kb_reason"    />
+        <result property="kbDatetime"    column="kb_datetime"    />
+        <result property="kbStudentname"    column="kb_studentName"    />
+        <result property="kbStudentid"    column="kb_studentId"    />
+        <result property="kbInstructor"    column="kb_instructor"    />
+        <result property="fId"    column="f_id"    />
+        <result property="dorId"    column="dor_id"    />
+        <result property="kbOpinion"    column="kb_opinion"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <association property="dormFloor" javaType="dormFloor" resultMap="com.springboot.dorm.mapper.DormFloorMapper.DormFloorResult"></association>
+        <association property="dormDormitory" javaType="dormDormitory" resultMap="com.springboot.dorm.mapper.DormDormitoryMapper.DormDormitoryResult"></association>
+    </resultMap>
+
+    <sql id="selectDormKeepBackVo">
+        select dkb.*,df.*,dd.* from dorm_keep_back dkb
+        left join  dorm_floor df on df.f_id = dkb.f_id
+        left join dorm_dormitory dd on dd.dor_id = dkb.dor_id
+    </sql>
+
+    <select id="selectDormKeepBackList" parameterType="DormKeepBack" resultMap="DormKeepBackResult">
+        <include refid="selectDormKeepBackVo"/>
+        <where>  
+            <if test="kbReason != null  and kbReason != ''"> and dkb.kb_reason like concat('%', #{kbReason}, '%')</if>
+            <if test="kbDatetime != null "> and dkb.kb_datetime = #{kbDatetime}</if>
+            <if test="kbStudentname != null  and kbStudentname != ''"> and dkb.kb_studentName like concat('%', #{kbStudentname}, '%')</if>
+            <if test="kbInstructor != null  and kbInstructor != ''"> and dkb.kb_instructor = #{kbInstructor}</if>
+            <if test="fId != null "> and dkb.f_id = #{fId}</if>
+            <if test="dorId != null "> and dkb.dor_id = #{dorId}</if>
+            <if test="kbOpinion != null  and kbOpinion != ''"> and dkb.kb_opinion = #{kbOpinion}</if>
+        </where>
+    </select>
+    
+    <select id="selectDormKeepBackByKbId" parameterType="Integer" resultMap="DormKeepBackResult">
+        <include refid="selectDormKeepBackVo"/>
+        where kb_id = #{kbId}
+    </select>
+        
+    <insert id="insertDormKeepBack" parameterType="DormKeepBack" useGeneratedKeys="true" keyProperty="kbId">
+        insert into dorm_keep_back
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="kbReason != null and kbReason != ''">kb_reason,</if>
+            <if test="kbDatetime != null">kb_datetime,</if>
+            <if test="kbStudentname != null">kb_studentName,</if>
+            <if test="kbStudentid != null">kb_studentId,</if>
+            <if test="kbInstructor != null">kb_instructor,</if>
+            <if test="fId != null">f_id,</if>
+            <if test="dorId != null">dor_id,</if>
+            <if test="kbOpinion != null">kb_opinion,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="kbReason != null and kbReason != ''">#{kbReason},</if>
+            <if test="kbDatetime != null">#{kbDatetime},</if>
+            <if test="kbStudentname != null">#{kbStudentname},</if>
+            <if test="kbStudentid != null">#{kbStudentid},</if>
+            <if test="kbInstructor != null">#{kbInstructor},</if>
+            <if test="fId != null">#{fId},</if>
+            <if test="dorId != null">#{dorId},</if>
+            <if test="kbOpinion != null">#{kbOpinion},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateDormKeepBack" parameterType="DormKeepBack">
+        update dorm_keep_back
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="kbReason != null and kbReason != ''">kb_reason = #{kbReason},</if>
+            <if test="kbDatetime != null">kb_datetime = #{kbDatetime},</if>
+            <if test="kbStudentname != null">kb_studentName = #{kbStudentname},</if>
+            <if test="kbStudentid != null">kb_studentId = #{kbStudentid},</if>
+            <if test="kbInstructor != null">kb_instructor = #{kbInstructor},</if>
+            <if test="fId != null">f_id = #{fId},</if>
+            <if test="dorId != null">dor_id = #{dorId},</if>
+            <if test="kbOpinion != null">kb_opinion = #{kbOpinion},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where kb_id = #{kbId}
+    </update>
+
+    <delete id="deleteDormKeepBackByKbId" parameterType="Integer">
+        delete from dorm_keep_back where kb_id = #{kbId}
+    </delete>
+
+    <delete id="deleteDormKeepBackByKbIds" parameterType="String">
+        delete from dorm_keep_back where kb_id in 
+        <foreach item="kbId" collection="array" open="(" separator="," close=")">
+            #{kbId}
+        </foreach>
+    </delete>
+
+    <!-- 根据状态统计留宿申请数量 -->
+    <select id="countByStatus" parameterType="java.lang.String" resultType="java.lang.Integer">
+        select count(*) from dorm_keep_back where kb_opinion = #{status}
+    </select>
+
+    <!-- 根据学生ID统计留宿申请数量 -->
+    <select id="countByStudentId" parameterType="java.lang.Long" resultType="java.lang.Integer">
+        select count(*) from dorm_keep_back where kb_studentid = #{studentId}
+    </select>
+
+    <!-- 获取平均处理天数 -->
+    <select id="getAvgProcessingDays" resultType="java.lang.Double">
+        select avg(datediff(update_time, create_time)) as avgDays
+        from dorm_keep_back 
+        where update_time is not null and create_time is not null
+        and kb_opinion is not null and kb_opinion != ''
+    </select>
+</mapper>

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.springboot.dorm.mapper.DormVisitMapper">
+    
+    <resultMap type="DormVisit" id="DormVisitResult">
+        <result property="visId"    column="vis_id"    />
+        <result property="visName"    column="vis_name"    />
+        <result property="visPhone"    column="vis_phone"    />
+        <result property="visType"    column="vis_type"    />
+        <result property="visInterviewee"    column="vis_interviewee"    />
+        <result property="visCause"    column="vis_cause"    />
+        <result property="fId"    column="f_id"    />
+        <result property="dorId"    column="dor_id"    />
+        <result property="visDatetime"    column="vis_datetime"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <association property="dormFloor" javaType="dormFloor" resultMap="com.springboot.dorm.mapper.DormFloorMapper.DormFloorResult"></association>
+        <association property="dormDormitory" javaType="dormDormitory" resultMap="com.springboot.dorm.mapper.DormDormitoryMapper.DormDormitoryResult"></association>
+    </resultMap>
+
+    <sql id="selectDormVisitVo">
+        select dv.*,dd.*,df.* from dorm_visit dv
+        left join  dorm_floor df on df.f_id = dv.f_id
+        left join dorm_dormitory dd on dd.dor_id = dv.dor_id
+    </sql>
+
+    <select id="selectDormVisitList" parameterType="DormVisit" resultMap="DormVisitResult">
+        <include refid="selectDormVisitVo"/>
+        <where>  
+            <if test="visName != null  and visName != ''"> and dv.vis_name like concat('%', #{visName}, '%')</if>
+            <if test="visPhone != null  and visPhone != ''"> and dv.vis_phone = #{visPhone}</if>
+            <if test="visType != null "> and dv.vis_type = #{visType}</if>
+            <if test="visInterviewee != null  and visInterviewee != ''"> and dv.vis_interviewee = #{visInterviewee}</if>
+            <if test="fId != null "> and dv.f_id = #{fId}</if>
+            <if test="dorId != null "> and dv.dor_id = #{dorId}</if>
+            <if test="visDatetime != null "> and dv.vis_datetime = #{visDatetime}</if>
+        </where>
+    </select>
+    
+    <select id="selectDormVisitByVisId" parameterType="Long" resultMap="DormVisitResult">
+        <include refid="selectDormVisitVo"/>
+        where vis_id = #{visId}
+    </select>
+        
+    <insert id="insertDormVisit" parameterType="DormVisit" useGeneratedKeys="true" keyProperty="visId">
+        insert into dorm_visit
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="visName != null">vis_name,</if>
+            <if test="visPhone != null">vis_phone,</if>
+            <if test="visType != null">vis_type,</if>
+            <if test="visInterviewee != null">vis_interviewee,</if>
+            <if test="visCause != null">vis_cause,</if>
+            <if test="fId != null">f_id,</if>
+            <if test="dorId != null">dor_id,</if>
+            <if test="visDatetime != null">vis_datetime,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="visName != null">#{visName},</if>
+            <if test="visPhone != null">#{visPhone},</if>
+            <if test="visType != null">#{visType},</if>
+            <if test="visInterviewee != null">#{visInterviewee},</if>
+            <if test="visCause != null">#{visCause},</if>
+            <if test="fId != null">#{fId},</if>
+            <if test="dorId != null">#{dorId},</if>
+            <if test="visDatetime != null">#{visDatetime},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateDormVisit" parameterType="DormVisit">
+        update dorm_visit
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="visName != null">vis_name = #{visName},</if>
+            <if test="visPhone != null">vis_phone = #{visPhone},</if>
+            <if test="visType != null">vis_type = #{visType},</if>
+            <if test="visInterviewee != null">vis_interviewee = #{visInterviewee},</if>
+            <if test="visCause != null">vis_cause = #{visCause},</if>
+            <if test="fId != null">f_id = #{fId},</if>
+            <if test="dorId != null">dor_id = #{dorId},</if>
+            <if test="visDatetime != null">vis_datetime = #{visDatetime},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where vis_id = #{visId}
+    </update>
+
+    <delete id="deleteDormVisitByVisId" parameterType="Long">
+        delete from dorm_visit where vis_id = #{visId}
+    </delete>
+
+    <delete id="deleteDormVisitByVisIds" parameterType="String">
+        delete from dorm_visit where vis_id in 
+        <foreach item="visId" collection="array" open="(" separator="," close=")">
+            #{visId}
+        </foreach>
+    </delete>
+
+    <!-- 根据楼层ID和状态统计来访登记数量 -->
+    <select id="countByFloorIdsAndStatus" resultType="java.lang.Integer">
+        select count(*) from dorm_visit 
+        where f_id in
+        <foreach item="floorId" collection="arg0" open="(" separator="," close=")">
+            #{floorId}
+        </foreach>
+        and status = #{arg1}
+    </select>
+
+    <!-- 根据学生ID统计来访登记数量 -->
+    <select id="countByStudentId" parameterType="java.lang.Long" resultType="java.lang.Integer">
+        select count(*) from dorm_visit where vis_interviewee = #{studentId}
+    </select>
+
+    <!-- 根据楼层ID统计本月处理的来访登记数 -->
+    <select id="countProcessedByFloorIdsThisMonth" parameterType="java.util.List" resultType="java.lang.Integer">
+        select count(*) from dorm_visit 
+        where f_id in
+        <foreach item="floorId" collection="list" open="(" separator="," close=")">
+            #{floorId}
+        </foreach>
+        and year(create_time) = year(now())
+        and month(create_time) = month(now())
+    </select>
+
+    <!-- 根据学生ID获取近期访客记录 -->
+    <select id="getRecentVisitsByStudentId" parameterType="java.lang.Long" resultType="java.util.Map">
+        select 
+            vis_id as visitId,
+            vis_name as visitorName,
+            vis_phone as visitorPhone,
+            vis_interviewee as interviewee,
+            vis_cause as visitCause,
+            vis_datetime as visitTime,
+            create_time as createTime
+        from dorm_visit 
+        where vis_interviewee = #{studentId}
+        order by create_time desc
+        limit 5
+    </select>
+</mapper>

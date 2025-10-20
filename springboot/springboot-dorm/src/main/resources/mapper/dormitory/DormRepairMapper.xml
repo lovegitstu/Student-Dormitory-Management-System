@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.springboot.dorm.mapper.DormRepairMapper">
+    
+    <resultMap type="DormRepair" id="DormRepairResult">
+        <result property="repairId"    column="repair_id"    />
+        <result property="fId"    column="f_id"    />
+        <result property="dorId"    column="dor_id"    />
+        <result property="repairContentType"    column="repair_content_type"    />
+        <result property="description"    column="description"    />
+        <result property="repairStatus"    column="repair_status"    />
+        <result property="repairDatetime"    column="repair_datetime"    />
+        <result property="nickName"    column="nick_name"    />
+        <result property="phone"    column="phone"    />
+        <result property="remark"    column="remark"    />
+        <result property="repairGrade"    column="repair_grade"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <association property="dormFloor" javaType="dormFloor" resultMap="com.springboot.dorm.mapper.DormFloorMapper.DormFloorResult"></association>
+        <association property="dormDormitory" javaType="dormDormitory" resultMap="com.springboot.dorm.mapper.DormDormitoryMapper.DormDormitoryResult"></association>
+    </resultMap>
+
+    <sql id="selectDormRepairVo">
+        select dr.*,df.*,dd.* from dorm_repair dr
+        left join  dorm_floor df on df.f_id = dr.f_id
+        left join dorm_dormitory dd on dd.dor_id = dr.dor_id
+    </sql>
+
+    <select id="selectDormRepairList" parameterType="DormRepair" resultMap="DormRepairResult">
+        <include refid="selectDormRepairVo"/>
+        <where>  
+            <if test="fId != null "> and dr.f_id = #{fId}</if>
+            <if test="dorId != null "> and dr.dor_id = #{dorId}</if>
+            <if test="repairContentType != null  and repairContentType != ''"> and dr.repair_content_type = #{repairContentType}</if>
+            <if test="description != null  and description != ''"> and dr.description = #{description}</if>
+            <if test="repairStatus != null  and repairStatus != ''"> and dr.repair_status = #{repairStatus}</if>
+            <if test="repairDatetime != null "> and dr.repair_datetime = #{repairDatetime}</if>
+            <if test="nickName != null  and nickName != ''"> and dr.nick_name like concat('%', #{nickName}, '%')</if>
+            <if test="phone != null  and phone != ''"> and dr.phone = #{phone}</if>
+            <if test="repairGrade != null  and repairGrade != ''"> and dr.repair_grade = #{repairGrade}</if>
+        </where>
+    </select>
+    
+    <select id="selectDormRepairByRepairId" parameterType="Integer" resultMap="DormRepairResult">
+        <include refid="selectDormRepairVo"/>
+        where repair_id = #{repairId}
+    </select>
+        
+    <insert id="insertDormRepair" parameterType="DormRepair" useGeneratedKeys="true" keyProperty="repairId">
+        insert into dorm_repair
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="fId != null">f_id,</if>
+            <if test="dorId != null">dor_id,</if>
+            <if test="repairContentType != null and repairContentType != ''">repair_content_type,</if>
+            <if test="description != null and description != ''">description,</if>
+            <if test="repairStatus != null and repairStatus != ''">repair_status,</if>
+            <if test="repairDatetime != null">repair_datetime,</if>
+            <if test="nickName != null">nick_name,</if>
+            <if test="phone != null">phone,</if>
+            <if test="remark != null">remark,</if>
+            <if test="repairGrade != null and repairGrade != ''">repair_grade,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="fId != null">#{fId},</if>
+            <if test="dorId != null">#{dorId},</if>
+            <if test="repairContentType != null and repairContentType != ''">#{repairContentType},</if>
+            <if test="description != null and description != ''">#{description},</if>
+            <if test="repairStatus != null and repairStatus != ''">#{repairStatus},</if>
+            <if test="repairDatetime != null">#{repairDatetime},</if>
+            <if test="nickName != null">#{nickName},</if>
+            <if test="phone != null">#{phone},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="repairGrade != null and repairGrade != ''">#{repairGrade},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateDormRepair" parameterType="DormRepair">
+        update dorm_repair
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="fId != null">f_id = #{fId},</if>
+            <if test="dorId != null">dor_id = #{dorId},</if>
+            <if test="repairContentType != null and repairContentType != ''">repair_content_type = #{repairContentType},</if>
+            <if test="description != null and description != ''">description = #{description},</if>
+            <if test="repairStatus != null and repairStatus != ''">repair_status = #{repairStatus},</if>
+            <if test="repairDatetime != null">repair_datetime = #{repairDatetime},</if>
+            <if test="nickName != null">nick_name = #{nickName},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="repairGrade != null and repairGrade != ''">repair_grade = #{repairGrade},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where repair_id = #{repairId}
+    </update>
+
+    <delete id="deleteDormRepairByRepairId" parameterType="Integer">
+        delete from dorm_repair where repair_id = #{repairId}
+    </delete>
+
+    <delete id="deleteDormRepairByRepairIds" parameterType="String">
+        delete from dorm_repair where repair_id in 
+        <foreach item="repairId" collection="array" open="(" separator="," close=")">
+            #{repairId}
+        </foreach>
+    </delete>
+
+    <!-- 根据状态统计维修工单数量 -->
+    <select id="countByStatus" parameterType="java.lang.String" resultType="java.lang.Integer">
+        select count(*) from dorm_repair where repair_status = #{status}
+    </select>
+
+    <!-- 根据楼层ID和状态统计维修工单数量 -->
+    <select id="countByFloorIdsAndStatus" resultType="java.lang.Integer">
+        select count(*) from dorm_repair 
+        where f_id in
+        <foreach item="floorId" collection="arg0" open="(" separator="," close=")">
+            #{floorId}
+        </foreach>
+        and repair_status = #{arg1}
+    </select>
+
+    <!-- 根据学生ID统计维修工单数量 -->
+    <select id="countByStudentId" parameterType="java.lang.Long" resultType="java.lang.Integer">
+        select count(*) from dorm_repair dr
+        inner join dorm_student ds on dr.nick_name = ds.stu_name
+        where ds.stu_id = #{studentId}
+    </select>
+
+    <!-- 查询维修类型统计 -->
+    <select id="selectRepairTypeStats" resultType="java.util.Map">
+        select 
+            repair_content_type as repairType,
+            count(*) as count
+        from dorm_repair 
+        group by repair_content_type
+        order by count desc
+    </select>
+
+    <!-- 根据日期统计新增维修工单数 -->
+    <select id="countNewRepairsByDate" parameterType="java.lang.String" resultType="java.lang.Integer">
+        select count(*) from dorm_repair 
+        where date(create_time) = #{date}
+    </select>
+
+    <!-- 根据楼层ID统计本月完成的维修工单数 -->
+    <select id="countCompletedByFloorIdsThisMonth" parameterType="java.util.List" resultType="java.lang.Integer">
+        select count(*) from dorm_repair 
+        where f_id in
+        <foreach item="floorId" collection="list" open="(" separator="," close=")">
+            #{floorId}
+        </foreach>
+        and repair_status = '已完成'
+        and year(update_time) = year(now())
+        and month(update_time) = month(now())
+    </select>
+
+    <!-- 获取平均处理时间（小时） -->
+    <select id="getAvgProcessingHours" resultType="java.lang.Double">
+        select avg(timestampdiff(hour, create_time, update_time)) as avgHours
+        from dorm_repair 
+        where repair_status = '已完成'
+        and update_time is not null
+    </select>
+
+    <!-- 统计24小时内处理完成的工单数 -->
+    <select id="countProcessedWithin24Hours" resultType="java.lang.Integer">
+        select count(*) from dorm_repair 
+        where repair_status = '已完成'
+        and timestampdiff(hour, create_time, update_time) &lt;= 24
+    </select>
+
+    <!-- 统计超过48小时处理的工单数 -->
+    <select id="countProcessedOver48Hours" resultType="java.lang.Integer">
+        select count(*) from dorm_repair 
+        where repair_status = '已完成'
+        and timestampdiff(hour, create_time, update_time) &gt; 48
+    </select>
+
+    <!-- 根据日期统计完成的维修工单数 -->
+    <select id="countCompletedRepairsByDate" parameterType="java.lang.String" resultType="java.lang.Integer">
+        select count(*) from dorm_repair 
+        where repair_status = '已完成'
+        and date(update_time) = #{date}
+    </select>
+</mapper>

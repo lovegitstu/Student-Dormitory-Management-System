@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.springboot.dorm.mapper.DormScoreMapper">
+    
+    <resultMap type="DormScore" id="DormScoreResult">
+        <result property="scoreId"    column="con_id"    />
+        <result property="studentId"    column="student_id"    />
+        <result property="dormId"    column="dor_id"    />
+        <result property="scoreDate"    column="con_datetime"    />
+        <result property="hygieneScore"    column="con_bed"    />
+        <result property="disciplineScore"    column="con_floor"    />
+        <result property="safetyScore"    column="con_well"    />
+        <result property="totalScore"    column="con_total"    />
+        <result property="scorer"    column="con_user"    />
+        <result property="remarks"    column="remark"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectDormScoreVo">
+        select dc.con_id, ds.stu_id as student_id, dc.dor_id, dc.con_datetime, dc.con_bed, dc.con_floor, dc.con_well, dc.con_toilet, dc.con_goods, dc.con_total, dc.con_user, dc.con_designation, dc.status, dc.del_flag, dc.remark, dc.create_by, dc.create_time, dc.update_by, dc.update_time
+        from dorm_contest dc
+        inner join dorm_student ds on ds.dor_id = dc.dor_id
+    </sql>
+
+    <select id="selectDormScoreList" parameterType="DormScore" resultMap="DormScoreResult">
+        <include refid="selectDormScoreVo"/>
+        <where>  
+            <if test="studentId != null "> and ds.stu_id = #{studentId}</if>
+            <if test="dormId != null "> and dc.dor_id = #{dormId}</if>
+            <if test="scoreDate != null "> and dc.con_datetime = #{scoreDate}</if>
+            <if test="totalScore != null "> and dc.con_total = #{totalScore}</if>
+            <if test="scorer != null  and scorer != ''"> and dc.con_user like concat('%', #{scorer}, '%')</if>
+        </where>
+        order by dc.con_datetime desc
+    </select>
+    
+    <select id="selectDormScoreByScoreId" parameterType="Long" resultMap="DormScoreResult">
+        <include refid="selectDormScoreVo"/>
+        where dc.con_id = #{scoreId}
+    </select>
+        
+    <insert id="insertDormScore" parameterType="DormScore" useGeneratedKeys="true" keyProperty="scoreId">
+        insert into dorm_contest
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="scoreDate != null">con_datetime,</if>
+            <if test="dormId != null">dor_id,</if>
+            <if test="hygieneScore != null">con_bed,</if>
+            <if test="disciplineScore != null">con_floor,</if>
+            <if test="safetyScore != null">con_well,</if>
+            <if test="totalScore != null">con_total,</if>
+            <if test="scorer != null">con_user,</if>
+            <if test="remarks != null">remark,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="scoreDate != null">#{scoreDate},</if>
+            <if test="dormId != null">#{dormId},</if>
+            <if test="hygieneScore != null">#{hygieneScore},</if>
+            <if test="disciplineScore != null">#{disciplineScore},</if>
+            <if test="safetyScore != null">#{safetyScore},</if>
+            <if test="totalScore != null">#{totalScore},</if>
+            <if test="scorer != null">#{scorer},</if>
+            <if test="remarks != null">#{remarks},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateDormScore" parameterType="DormScore">
+        update dorm_contest
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="scoreDate != null">con_datetime = #{scoreDate},</if>
+            <if test="dormId != null">dor_id = #{dormId},</if>
+            <if test="hygieneScore != null">con_bed = #{hygieneScore},</if>
+            <if test="disciplineScore != null">con_floor = #{disciplineScore},</if>
+            <if test="safetyScore != null">con_well = #{safetyScore},</if>
+            <if test="totalScore != null">con_total = #{totalScore},</if>
+            <if test="scorer != null">con_user = #{scorer},</if>
+            <if test="remarks != null">remark = #{remarks},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where con_id = #{scoreId}
+    </update>
+
+    <delete id="deleteDormScoreByScoreId" parameterType="Long">
+        delete from dorm_contest where con_id = #{scoreId}
+    </delete>
+
+    <delete id="deleteDormScoreByScoreIds" parameterType="String">
+        delete from dorm_contest where con_id in 
+        <foreach item="scoreId" collection="array" open="(" separator="," close=")">
+            #{scoreId}
+        </foreach>
+    </delete>
+
+    <!-- 根据学生ID查询最近的评分记录 -->
+    <select id="selectRecentScoresByStudentId" parameterType="Long" resultMap="DormScoreResult">
+        <include refid="selectDormScoreVo"/>
+        where ds.stu_id = #{studentId}
+        order by dc.con_datetime desc
+        limit 10
+    </select>
+
+    <!-- 根据学生ID查询最近的评分记录（用于统计服务） -->
+    <select id="getRecentScoresByStudentId" parameterType="Long" resultMap="DormScoreResult">
+        <include refid="selectDormScoreVo"/>
+        where ds.stu_id = #{studentId}
+        order by dc.con_datetime desc
+        limit 10
+    </select>
+
+    <!-- 根据学生ID和月份查询评分记录 -->
+    <select id="getMonthlyScoresByStudentId" resultMap="DormScoreResult">
+        <include refid="selectDormScoreVo"/>
+        where ds.stu_id = #{arg0}
+        and DATE_FORMAT(dc.con_datetime, '%Y-%m') = #{arg1}
+        order by dc.con_datetime desc
+    </select>
+
+</mapper>

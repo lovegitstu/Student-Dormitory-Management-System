@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.springboot.dorm.mapper.DormBedMapper">
+    
+    <resultMap type="DormBed" id="DormBedResult">
+        <result property="bedId"    column="bed_id"    />
+        <result property="dorId"    column="dor_id"    />
+        <result property="stuId"    column="stu_id"    />
+        <result property="stuName"    column="stu_name"    />
+        <result property="bedCode"    column="bed_code"    />
+        <result property="bedStatus"    column="bed_status"    />
+        <result property="bedRecordId"    column="bed_record_id"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="remark"    column="remark"    />
+        <association property="dormDormitory" javaType="DormDormitory">
+            <result property="dorId" column="dor_id"/>
+            <result property="dorName" column="dor_name"/>
+            <result property="fId" column="f_id"/>
+        </association>
+        <association property="dormStudent" javaType="DormStudent">
+            <result property="stuId" column="stu_id"/>
+            <result property="stuCode" column="stu_code"/>
+            <result property="stuName" column="stu_name"/>
+            <result property="dorId" column="stu_dor_id"/>
+            <result property="fId" column="stu_f_id"/>
+            <result property="userId" column="user_id"/>
+        </association>
+    </resultMap>
+    
+    <resultMap id="dormStudentResult" type="DormStudent">
+        <result property="stuId"    column="stu_id"    />
+        <result property="stuCode"    column="stu_code"    />
+        <result property="stuName"    column="stu_name"    />
+        <result property="dorId"    column="stu_dor_id"    />
+        <result property="fId"    column="stu_f_id"    />
+        <result property="userId"    column="user_id"    />
+    </resultMap>
+
+    <sql id="selectDormBedVo">
+        select b.bed_id, b.dor_id, b.stu_id, b.bed_code, b.bed_status, b.bed_record_id, b.create_time, b.update_time, b.create_by, b.update_by, b.remark,
+               d.dor_name, d.f_id,
+               s.stu_code, s.stu_name, s.user_id
+        from dorm_bed b
+        left join dorm_dormitory d on b.dor_id = d.dor_id
+        left join dorm_student s on b.stu_id = s.stu_id
+    </sql>
+
+    <select id="selectDormBedList" parameterType="DormBed" resultMap="DormBedResult">
+        <include refid="selectDormBedVo"/>
+        <where>  
+            <if test="dorId != null "> and b.dor_id = #{dorId}</if>
+            <if test="stuId != null "> and b.stu_id = #{stuId}</if>
+            <if test="bedCode != null  and bedCode != ''"> and b.bed_code = #{bedCode}</if>
+            <if test="bedStatus != null  and bedStatus != ''"> and b.bed_status = #{bedStatus}</if>
+            <if test="bedRecordId != null "> and b.bed_record_id = #{bedRecordId}</if>
+        </where>
+    </select>
+    
+    <select id="selectDormBedByBedId" parameterType="Long" resultMap="DormBedResult">
+        <include refid="selectDormBedVo"/>
+        where b.bed_id = #{bedId}
+    </select>
+        
+    <insert id="insertDormBed" parameterType="DormBed" useGeneratedKeys="true" keyProperty="bedId">
+        insert into dorm_bed
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="dorId != null">dor_id,</if>
+            <if test="stuId != null">stu_id,</if>
+            <if test="bedCode != null">bed_code,</if>
+            <if test="bedStatus != null">bed_status,</if>
+            <if test="bedRecordId != null">bed_record_id,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="dorId != null">#{dorId},</if>
+            <if test="stuId != null">#{stuId},</if>
+            <if test="bedCode != null">#{bedCode},</if>
+            <if test="bedStatus != null">#{bedStatus},</if>
+            <if test="bedRecordId != null">#{bedRecordId},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateDormBed" parameterType="DormBed">
+        update dorm_bed
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="dorId != null">dor_id = #{dorId},</if>
+            stu_id = #{stuId},
+            <if test="bedCode != null">bed_code = #{bedCode},</if>
+            <if test="bedStatus != null">bed_status = #{bedStatus},</if>
+            <if test="bedRecordId != null">bed_record_id = #{bedRecordId},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where bed_id = #{bedId}
+    </update>
+
+    <delete id="deleteDormBedByBedId" parameterType="Long">
+        delete from dorm_bed where bed_id = #{bedId}
+    </delete>
+
+    <delete id="deleteDormBedByBedIds" parameterType="String">
+        delete from dorm_bed where bed_id in 
+        <foreach item="bedId" collection="array" open="(" separator="," close=")">
+            #{bedId}
+        </foreach>
+    </delete>
+
+    <!-- 统计床位总数 -->
+    <select id="countTotalBeds" resultType="java.lang.Integer">
+        select count(*) from dorm_bed
+    </select>
+
+    <!-- 统计已占用床位数 -->
+    <select id="countOccupiedBeds" resultType="java.lang.Integer">
+        select count(*) from dorm_bed where stu_id is not null
+    </select>
+
+    <!-- 根据楼层ID列表统计床位数量 -->
+    <select id="countByFloorIds" parameterType="java.util.List" resultType="java.lang.Integer">
+        select count(*) from dorm_bed db
+        inner join dorm_dormitory dr on db.dor_id = dr.dor_id
+        where dr.f_id in
+        <foreach item="floorId" collection="list" open="(" separator="," close=")">
+            #{floorId}
+        </foreach>
+    </select>
+
+    <!-- 根据楼层ID列表统计已占用床位数量 -->
+    <select id="countOccupiedByFloorIds" parameterType="java.util.List" resultType="java.lang.Integer">
+        select count(*) from dorm_bed db
+        inner join dorm_dormitory dr on db.dor_id = dr.dor_id
+        where db.stu_id is not null and dr.f_id in
+        <foreach item="floorId" collection="list" open="(" separator="," close=")">
+            #{floorId}
+        </foreach>
+    </select>
+
+    <!-- 根据日期查询入住率 -->
+    <select id="getOccupancyRateByDate" parameterType="java.lang.String" resultType="java.util.Map">
+        select 
+            date(#{date}) as statisticsDate,
+            count(*) as totalBeds,
+            sum(case when stu_id is not null then 1 else 0 end) as occupiedBeds,
+            case 
+                when count(*) = 0 then 0.0
+                else round(sum(case when stu_id is not null then 1 else 0 end) * 100.0 / count(*), 2)
+            end as occupancyRate
+        from dorm_bed
+    </select>
+</mapper>

@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.springboot.dorm.mapper.DormComeMapper">
+    
+    <resultMap type="DormCome" id="DormComeResult">
+        <result property="id"    column="id"    />
+        <result property="stuId"    column="stu_id"    />
+        <result property="datetime"    column="datetime"    />
+        <result property="cause"    column="cause"    />
+        <result property="opinion"    column="opinion"    />
+        <result property="comeType"    column="come_type"    />
+        <result property="status"    column="status"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+        <result property="stuName"    column="stu_name"    />
+        <result property="fId"    column="f_id"    />
+        <result property="dorId"    column="dor_id"    />
+        <association property="dormFloor" javaType="dormFloor" resultMap="com.springboot.dorm.mapper.DormFloorMapper.DormFloorResult"></association>
+        <association property="dormDormitory" javaType="dormDormitory" resultMap="com.springboot.dorm.mapper.DormDormitoryMapper.DormDormitoryResult"></association>
+    </resultMap>
+
+    <sql id="selectDormComeVo">
+        select dc.*, ds.stu_name, ds.f_id, ds.dor_id, df.*, dd.* 
+        from dorm_come dc
+        left join dorm_student ds on ds.stu_id = dc.stu_id
+        left join dorm_floor df on df.f_id = ds.f_id
+        left join dorm_dormitory dd on dd.dor_id = ds.dor_id
+    </sql>
+
+    <select id="selectDormComeList" parameterType="DormCome" resultMap="DormComeResult">
+        <include refid="selectDormComeVo"/>
+        <where>  
+            <if test="stuId != null "> and dc.stu_id = #{stuId}</if>
+            <if test="datetime != null "> and dc.datetime like #{datetime}</if>
+            <if test="opinion != null  and opinion != ''"> and dc.opinion = #{opinion}</if>
+            <if test="comeType != null "> and dc.come_type = #{comeType}</if>
+            <if test="status != null  and status != ''"> and dc.status = #{status}</if>
+        </where>
+    </select>
+    
+    <select id="selectDormComeById" parameterType="Long" resultMap="DormComeResult">
+        <include refid="selectDormComeVo"/>
+        where id = #{id}
+    </select>
+        
+    <insert id="insertDormCome" parameterType="DormCome">
+        insert into dorm_come
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">id,</if>
+            <if test="stuId != null">stu_id,</if>
+            <if test="datetime != null">datetime,</if>
+            <if test="cause != null and cause != ''">cause,</if>
+            <if test="opinion != null">opinion,</if>
+            <if test="comeType != null">come_type,</if>
+            <if test="status != null">status,</if>
+            <if test="delFlag != null">del_flag,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">#{id},</if>
+            <if test="stuId != null">#{stuId},</if>
+            <if test="datetime != null">#{datetime},</if>
+            <if test="cause != null and cause != ''">#{cause},</if>
+            <if test="opinion != null">#{opinion},</if>
+            <if test="comeType != null">#{comeType},</if>
+            <if test="status != null">#{status},</if>
+            <if test="delFlag != null">#{delFlag},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateDormCome" parameterType="DormCome">
+        update dorm_come
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="stuId != null">stu_id = #{stuId},</if>
+            <if test="datetime != null">datetime = #{datetime},</if>
+            <if test="cause != null and cause != ''">cause = #{cause},</if>
+            <if test="opinion != null">opinion = #{opinion},</if>
+            <if test="comeType != null">come_type = #{comeType},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="delFlag != null">del_flag = #{delFlag},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteDormComeById" parameterType="Long">
+        delete from dorm_come where id = #{id}
+    </delete>
+
+    <delete id="deleteDormComeByIds" parameterType="String">
+        delete from dorm_come where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 根据状态统计回校申请数量 -->
+    <select id="countByStatus" parameterType="java.lang.String" resultType="java.lang.Integer">
+        select count(*) from dorm_come where status = #{status}
+    </select>
+
+    <!-- 根据学生ID统计回校申请数量 -->
+    <select id="countByStudentId" parameterType="java.lang.Long" resultType="java.lang.Integer">
+        select count(*) from dorm_come where stu_id = #{studentId}
+    </select>
+
+    <!-- 获取平均处理天数 -->
+    <select id="getAvgProcessingDays" resultType="java.lang.Double">
+        select avg(datediff(update_time, create_time)) as avgDays
+        from dorm_come 
+        where update_time is not null and create_time is not null
+        and status is not null and status != ''
+    </select>
+</mapper>

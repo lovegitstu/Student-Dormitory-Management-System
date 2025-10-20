@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.springboot.dorm.mapper.DormContestMapper">
+    
+    <resultMap type="DormContest" id="DormContestResult">
+        <result property="conId"    column="con_id"    />
+        <result property="conDatetime"    column="con_datetime"    />
+        <result property="fId"    column="f_id"    />
+        <result property="dorId"    column="dor_id"    />
+        <result property="conBed"    column="con_bed"    />
+        <result property="conFloor"    column="con_floor"    />
+        <result property="conWell"    column="con_well"    />
+        <result property="conToilet"    column="con_toilet"    />
+        <result property="conGoods"    column="con_goods"    />
+        <result property="conTotal"    column="con_total"    />
+        <result property="conUser"    column="con_user"    />
+        <result property="conDesignation"    column="con_designation"    />
+        <result property="remark"    column="remark"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <association property="dormFloor" javaType="dormFloor" resultMap="com.springboot.dorm.mapper.DormFloorMapper.DormFloorResult"></association>
+        <association property="dormDormitory" javaType="dormDormitory" resultMap="com.springboot.dorm.mapper.DormDormitoryMapper.DormDormitoryResult"></association>
+    </resultMap>
+
+    <sql id="selectDormContestVo">
+        select dc.*,df.*,dd.* from dorm_contest dc
+        left join dorm_floor df on df.f_id = dc.f_id
+        left join dorm_dormitory dd on dd.dor_id = dc.dor_id
+    </sql>
+
+    <select id="selectDormContestList" parameterType="DormContest" resultMap="DormContestResult">
+        <include refid="selectDormContestVo"/>
+        <where>  
+            <if test="conDatetime != null "> and dc.con_datetime = #{conDatetime}</if>
+            <if test="fId != null "> and dc.f_id = #{fId}</if>
+            <if test="dorId != null "> and dc.dor_id = #{dorId}</if>
+            <if test="conUser != null  and conUser != ''"> and dc.con_user like concat('%', #{conUser}, '%')</if>
+            <if test="conDesignation != null  and conDesignation != ''"> and dc.con_designation = #{conDesignation}</if>
+        </where>
+    </select>
+    
+    <select id="selectDormContestByConId" parameterType="Integer" resultMap="DormContestResult">
+        <include refid="selectDormContestVo"/>
+        where con_id = #{conId}
+    </select>
+        
+    <insert id="insertDormContest" parameterType="DormContest" useGeneratedKeys="true" keyProperty="conId">
+        insert into dorm_contest
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="conDatetime != null">con_datetime,</if>
+            <if test="fId != null">f_id,</if>
+            <if test="dorId != null">dor_id,</if>
+            <if test="conBed != null">con_bed,</if>
+            <if test="conFloor != null">con_floor,</if>
+            <if test="conWell != null">con_well,</if>
+            <if test="conToilet != null">con_toilet,</if>
+            <if test="conGoods != null">con_goods,</if>
+            <if test="conTotal != null">con_total,</if>
+            <if test="conUser != null">con_user,</if>
+            <if test="conDesignation != null">con_designation,</if>
+            <if test="remark != null">remark,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="conDatetime != null">#{conDatetime},</if>
+            <if test="fId != null">#{fId},</if>
+            <if test="dorId != null">#{dorId},</if>
+            <if test="conBed != null">#{conBed},</if>
+            <if test="conFloor != null">#{conFloor},</if>
+            <if test="conWell != null">#{conWell},</if>
+            <if test="conToilet != null">#{conToilet},</if>
+            <if test="conGoods != null">#{conGoods},</if>
+            <if test="conTotal != null">#{conTotal},</if>
+            <if test="conUser != null">#{conUser},</if>
+            <if test="conDesignation != null">#{conDesignation},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateDormContest" parameterType="DormContest">
+        update dorm_contest
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="conDatetime != null">con_datetime = #{conDatetime},</if>
+            <if test="fId != null">f_id = #{fId},</if>
+            <if test="dorId != null">dor_id = #{dorId},</if>
+            <if test="conBed != null">con_bed = #{conBed},</if>
+            <if test="conFloor != null">con_floor = #{conFloor},</if>
+            <if test="conWell != null">con_well = #{conWell},</if>
+            <if test="conToilet != null">con_toilet = #{conToilet},</if>
+            <if test="conGoods != null">con_goods = #{conGoods},</if>
+            <if test="conTotal != null">con_total = #{conTotal},</if>
+            <if test="conUser != null">con_user = #{conUser},</if>
+            <if test="conDesignation != null">con_designation = #{conDesignation},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where con_id = #{conId}
+    </update>
+
+    <delete id="deleteDormContestByConId" parameterType="Integer">
+        delete from dorm_contest where con_id = #{conId}
+    </delete>
+
+    <delete id="deleteDormContestByConIds" parameterType="String">
+        delete from dorm_contest where con_id in 
+        <foreach item="conId" collection="array" open="(" separator="," close=")">
+            #{conId}
+        </foreach>
+    </delete>
+</mapper>

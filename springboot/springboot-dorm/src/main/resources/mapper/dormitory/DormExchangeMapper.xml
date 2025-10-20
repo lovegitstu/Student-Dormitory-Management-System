@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.springboot.dorm.mapper.DormExchangeMapper">
+    
+    <resultMap type="DormExchange" id="DormExchangeResult">
+        <result property="id"    column="id"    />
+        <result property="fId"    column="f_id"    />
+        <result property="dorId"    column="dor_id"    />
+        <result property="bedId"    column="bed_id"    />
+        <result property="originalBedId"    column="original_bed_id"    />
+        <result property="dormName"    column="dorm_name"    />
+        <result property="stuId"    column="stu_id"    />
+        <result property="stuName"    column="stu_name"    />
+        <result property="opinion"    column="opinion"    />
+        <result property="excuse"    column="excuse"    />
+        <result property="dorType"    column="dor_type"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <association property="dormFloor" javaType="dormFloor" resultMap="com.springboot.dorm.mapper.DormFloorMapper.DormFloorResult"></association>
+        <association property="dormDormitory" javaType="dormDormitory" resultMap="com.springboot.dorm.mapper.DormDormitoryMapper.DormDormitoryResult"></association>
+    </resultMap>
+
+    <sql id="selectDormExchangeVo">
+        select de.*,df.*,dd.* from dorm_exchange de
+        left join dorm_floor df on df.f_id = de.f_id
+        left join dorm_dormitory dd on dd.dor_id = de.dor_id
+    </sql>
+
+    <select id="selectDormExchangeList" parameterType="DormExchange" resultMap="DormExchangeResult">
+        <include refid="selectDormExchangeVo"/>
+        <where>  
+            <if test="fId != null "> and de.f_id = #{fId}</if>
+            <if test="dorId != null "> and de.dor_id = #{dorId}</if>
+            <if test="bedId != null "> and de.bed_id = #{bedId}</if>
+            <if test="dormName != null  and dormName != ''"> and de.dorm_name like concat('%', #{dormName}, '%')</if>
+            <if test="stuName != null  and stuName != ''"> and de.stu_name like concat('%', #{stuName}, '%')</if>
+            <if test="opinion != null "> and de.opinion = #{opinion}</if>
+            <if test="dorType != null "> and de.dor_type = #{dorType}</if>
+        </where>
+    </select>
+    
+    <select id="selectDormExchangeById" parameterType="Long" resultMap="DormExchangeResult">
+        <include refid="selectDormExchangeVo"/>
+        where id = #{id}
+    </select>
+        
+    <insert id="insertDormExchange" parameterType="DormExchange" useGeneratedKeys="true" keyProperty="id">
+        insert into dorm_exchange
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="fId != null">f_id,</if>
+            <if test="dorId != null">dor_id,</if>
+            <if test="bedId != null">bed_id,</if>
+            <if test="originalBedId != null">original_bed_id,</if>
+            <if test="dormName != null">dorm_name,</if>
+            <if test="stuId != null">stu_id,</if>
+            <if test="stuName != null and stuName != ''">stu_name,</if>
+            <if test="opinion != null">opinion,</if>
+            <if test="excuse != null and excuse != ''">excuse,</if>
+            <if test="dorType != null">dor_type,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="updateBy != null">update_by,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="fId != null">#{fId},</if>
+            <if test="dorId != null">#{dorId},</if>
+            <if test="bedId != null">#{bedId},</if>
+            <if test="originalBedId != null">#{originalBedId},</if>
+            <if test="dormName != null">#{dormName},</if>
+            <if test="stuId != null">#{stuId},</if>
+            <if test="stuName != null and stuName != ''">#{stuName},</if>
+            <if test="opinion != null">#{opinion},</if>
+            <if test="excuse != null and excuse != ''">#{excuse},</if>
+            <if test="dorType != null">#{dorType},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+         </trim>
+    </insert>
+
+    <update id="updateDormExchange" parameterType="DormExchange">
+        update dorm_exchange
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="fId != null">f_id = #{fId},</if>
+            <if test="dorId != null">dor_id = #{dorId},</if>
+            <if test="bedId != null">bed_id = #{bedId},</if>
+            <if test="originalBedId != null">original_bed_id = #{originalBedId},</if>
+            <if test="dormName != null">dorm_name = #{dormName},</if>
+            <if test="stuId != null">stu_id = #{stuId},</if>
+            <if test="stuName != null and stuName != ''">stu_name = #{stuName},</if>
+            <if test="opinion != null">opinion = #{opinion},</if>
+            <if test="excuse != null and excuse != ''">excuse = #{excuse},</if>
+            <if test="dorType != null">dor_type = #{dorType},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteDormExchangeById" parameterType="Long">
+        delete from dorm_exchange where id = #{id}
+    </delete>
+
+    <delete id="deleteDormExchangeByIds" parameterType="String">
+        delete from dorm_exchange where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 根据状态统计换宿申请数量 -->
+    <select id="countByStatus" parameterType="java.lang.String" resultType="java.lang.Integer">
+        select count(*) from dorm_exchange where opinion = #{status}
+    </select>
+
+    <!-- 根据学生ID统计换宿申请数量 -->
+    <select id="countByStudentId" parameterType="java.lang.Long" resultType="java.lang.Integer">
+        select count(*) from dorm_exchange where stu_id = #{studentId}
+    </select>
+
+    <!-- 获取平均处理天数 -->
+    <select id="getAvgProcessingDays" resultType="java.lang.Double">
+        select avg(datediff(update_time, create_time)) as avgDays
+        from dorm_exchange 
+        where opinion is not null and update_time is not null
+    </select>
+
+    <!-- 根据学生ID获取近期换宿申请记录 -->
+    <select id="getRecentExchangesByStudentId" parameterType="java.lang.Long" resultType="java.util.Map">
+        select 
+            id,
+            stu_name as studentName,
+            dorm_name as dormName,
+            create_time as createTime,
+            opinion as status
+        from dorm_exchange 
+        where stu_id = #{studentId}
+        order by create_time desc
+        limit 5
+    </select>
+</mapper>

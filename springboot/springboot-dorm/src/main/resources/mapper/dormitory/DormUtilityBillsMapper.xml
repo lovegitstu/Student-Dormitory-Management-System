@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.springboot.dorm.mapper.DormUtilityBillsMapper">
+    
+    <resultMap type="DormUtilityBills" id="DormUtilityBillsResult">
+        <result property="ubId"    column="ub_id"    />
+        <result property="fId"    column="f_id"    />
+        <result property="dorId"    column="dor_id"    />
+        <result property="ubDatetime"    column="ub_datetime"    />
+        <result property="ubWater"    column="ub_water"    />
+        <result property="ubWaterMonad"    column="ub_water_monad"    />
+        <result property="ubElectricityRate"    column="ub_electricity_rate"    />
+        <result property="ubElectricityUnits"    column="ub_electricity_units"    />
+        <result property="ubWaterConsumption"    column="ub_water_consumption"    />
+        <result property="ubElectricityConsumption"    column="ub_electricity_consumption"    />
+        <result property="ubTotalCost"    column="ub_total_cost"    />
+        <result property="ubBalance"    column="ub_balance"    />
+        <result property="ubPaymentStatus"    column="ub_payment_status"    />
+        <result property="ubIsnotarize"    column="ub_isnotarize"    />
+        <result property="remark"    column="remark"    />
+        <result property="ubMeterReading"    column="ub_meter_reading"    />
+        <result property="ubPhone"    column="ub_phone"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <association property="dormFloor" javaType="dormFloor" resultMap="com.springboot.dorm.mapper.DormFloorMapper.DormFloorResult"></association>
+        <association property="dormDormitory" javaType="dormDormitory" resultMap="com.springboot.dorm.mapper.DormDormitoryMapper.DormDormitoryResult"></association>
+<!--        <association property="sysUser" javaType="sysUser" resultMap="com.springboot.system.mapper.SysUserMapper.SysUserResult"></association>-->
+    </resultMap>
+
+    <sql id="selectDormUtilityBillsVo">
+        select dub.*,df.*,dd.* from dorm_utility_bills dub
+        left join  dorm_floor df on df.f_id = dub.f_id
+        left join dorm_dormitory dd on dd.dor_id = dub.dor_id
+--         left join sys_user u on u.dor_id = dub.dor_id
+    </sql>
+
+    <select id="selectDormUtilityBillsList" parameterType="DormUtilityBills" resultMap="DormUtilityBillsResult">
+        <include refid="selectDormUtilityBillsVo"/>
+        <where>  
+            <if test="fId != null "> and dub.f_id = #{fId}</if>
+            <if test="dorId != null "> and dub.dor_id = #{dorId}</if>
+            <if test="ubDatetime != null "> and dub.ub_datetime = #{ubDatetime}</if>
+            <if test="ubMeterReading != null  and ubMeterReading != ''"> and dub.ub_meter_reading = #{ubMeterReading}</if>
+            <if test="ubPhone != null "> and dub.ub_phone = #{ubPhone}</if>
+        </where>
+        ORDER BY dub.create_time DESC
+    </select>
+    
+    <select id="selectDormUtilityBillsByUbId" parameterType="Integer" resultMap="DormUtilityBillsResult">
+        <include refid="selectDormUtilityBillsVo"/>
+        where ub_id = #{ubId}
+    </select>
+        
+    <insert id="insertDormUtilityBills" parameterType="DormUtilityBills" useGeneratedKeys="true" keyProperty="ubId">
+        insert into dorm_utility_bills
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="fId != null">f_id,</if>
+            <if test="dorId != null">dor_id,</if>
+            <if test="ubDatetime != null">ub_datetime,</if>
+            <if test="ubWater != null">ub_water,</if>
+            <if test="ubWaterMonad != null">ub_water_monad,</if>
+            <if test="ubElectricityRate != null">ub_electricity_rate,</if>
+            <if test="ubElectricityUnits != null">ub_electricity_units,</if>
+            <if test="ubWaterConsumption != null">ub_water_consumption,</if>
+            <if test="ubElectricityConsumption != null">ub_electricity_consumption,</if>
+            <if test="ubTotalCost != null">ub_total_cost,</if>
+            <if test="ubBalance != null">ub_balance,</if>
+            <if test="ubPaymentStatus != null">ub_payment_status,</if>
+            <if test="ubIsnotarize != null">ub_isnotarize,</if>
+            <if test="remark != null">remark,</if>
+            <if test="ubMeterReading != null">ub_meter_reading,</if>
+            <if test="ubPhone != null">ub_phone,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="fId != null">#{fId},</if>
+            <if test="dorId != null">#{dorId},</if>
+            <if test="ubDatetime != null">#{ubDatetime},</if>
+            <if test="ubWater != null">#{ubWater},</if>
+            <if test="ubWaterMonad != null">#{ubWaterMonad},</if>
+            <if test="ubElectricityRate != null">#{ubElectricityRate},</if>
+            <if test="ubElectricityUnits != null">#{ubElectricityUnits},</if>
+            <if test="ubWaterConsumption != null">#{ubWaterConsumption},</if>
+            <if test="ubElectricityConsumption != null">#{ubElectricityConsumption},</if>
+            <if test="ubTotalCost != null">#{ubTotalCost},</if>
+            <if test="ubBalance != null">#{ubBalance},</if>
+            <if test="ubPaymentStatus != null">#{ubPaymentStatus},</if>
+            <if test="ubIsnotarize != null">#{ubIsnotarize},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="ubMeterReading != null">#{ubMeterReading},</if>
+            <if test="ubPhone != null">#{ubPhone},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateDormUtilityBills" parameterType="DormUtilityBills">
+        update dorm_utility_bills
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="fId != null">f_id = #{fId},</if>
+            <if test="dorId != null">dor_id = #{dorId},</if>
+            <if test="ubDatetime != null">ub_datetime = #{ubDatetime},</if>
+            <if test="ubWater != null">ub_water = #{ubWater},</if>
+            <if test="ubWaterMonad != null">ub_water_monad = #{ubWaterMonad},</if>
+            <if test="ubElectricityRate != null">ub_electricity_rate = #{ubElectricityRate},</if>
+            <if test="ubElectricityUnits != null">ub_electricity_units = #{ubElectricityUnits},</if>
+            <if test="ubWaterConsumption != null">ub_water_consumption = #{ubWaterConsumption},</if>
+            <if test="ubElectricityConsumption != null">ub_electricity_consumption = #{ubElectricityConsumption},</if>
+            <if test="ubTotalCost != null">ub_total_cost = #{ubTotalCost},</if>
+            <if test="ubBalance != null">ub_balance = #{ubBalance},</if>
+            <if test="ubPaymentStatus != null">ub_payment_status = #{ubPaymentStatus},</if>
+            <if test="ubIsnotarize != null">ub_isnotarize = #{ubIsnotarize},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="ubMeterReading != null">ub_meter_reading = #{ubMeterReading},</if>
+            <if test="ubPhone != null">ub_phone = #{ubPhone},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where ub_id = #{ubId}
+    </update>
+
+    <delete id="deleteDormUtilityBillsByUbId" parameterType="Integer">
+        delete from dorm_utility_bills where ub_id = #{ubId}
+    </delete>
+
+    <delete id="deleteDormUtilityBillsByUbIds" parameterType="String">
+        delete from dorm_utility_bills where ub_id in 
+        <foreach item="ubId" collection="array" open="(" separator="," close=")">
+            #{ubId}
+        </foreach>
+    </delete>
+
+    <!-- 查询总金额 -->
+    <select id="selectTotalAmount" resultType="java.lang.Double">
+        select COALESCE(sum(ub_total_cost), 0.0) from dorm_utility_bills
+    </select>
+
+    <!-- 查询已缴费金额 -->
+    <select id="selectPaidAmount" resultType="java.lang.Double">
+        select COALESCE(sum(ub_total_cost), 0.0) from dorm_utility_bills where ub_payment_status = 1
+    </select>
+
+    <!-- 查询未缴费金额 -->
+    <select id="selectUnpaidAmount" resultType="java.lang.Double">
+        select COALESCE(sum(ub_total_cost), 0.0) from dorm_utility_bills where ub_payment_status = 0
+    </select>
+
+    <!-- 查询月度账单统计 -->
+    <select id="selectMonthlyBills" resultType="java.util.Map">
+        select 
+            DATE_FORMAT(ub_datetime, '%Y-%m') as month,
+            COALESCE(sum(ub_total_cost), 0.0) as totalAmount,
+            count(*) as billCount
+        from dorm_utility_bills 
+        group by DATE_FORMAT(ub_datetime, '%Y-%m')
+        order by month desc
+    </select>
+
+    <!-- 查询各楼层账单统计 -->
+    <select id="selectBillsByFloor" resultType="java.util.Map">
+        select 
+            df.f_name as floorName,
+            COALESCE(sum(dub.ub_total_cost), 0.0) as totalAmount,
+            count(dub.ub_id) as billCount
+        from dorm_utility_bills dub
+        left join dorm_floor df on df.f_id = dub.f_id
+        group by dub.f_id, df.f_name
+        order by totalAmount desc
+    </select>
+
+    <!-- 根据学生ID查询总金额 -->
+    <select id="selectTotalAmountByStudentId" parameterType="java.lang.Long" resultType="java.lang.Double">
+        select COALESCE(sum(dub.ub_total_cost), 0.0) 
+        from dorm_utility_bills dub
+        inner join dorm_student ds on ds.f_id = dub.f_id and ds.dor_id = dub.dor_id
+        where ds.stu_id = #{studentId}
+    </select>
+
+    <!-- 根据学生ID查询已缴费金额 -->
+    <select id="selectPaidAmountByStudentId" parameterType="java.lang.Long" resultType="java.lang.Double">
+        select COALESCE(sum(dub.ub_total_cost), 0.0) 
+        from dorm_utility_bills dub
+        inner join dorm_student ds on ds.f_id = dub.f_id and ds.dor_id = dub.dor_id
+        where ds.stu_id = #{studentId} and dub.ub_payment_status = 1
+    </select>
+
+    <!-- 根据学生ID统计未缴费账单数 -->
+    <select id="countUnpaidByStudentId" parameterType="java.lang.Long" resultType="java.lang.Integer">
+        select count(*) 
+        from dorm_utility_bills dub
+        inner join dorm_student ds on ds.f_id = dub.f_id and ds.dor_id = dub.dor_id
+        where ds.stu_id = #{studentId} and dub.ub_payment_status = 0
+    </select>
+</mapper>
