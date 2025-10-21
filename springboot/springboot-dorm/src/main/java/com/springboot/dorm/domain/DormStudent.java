@@ -58,6 +58,12 @@ public class DormStudent extends BaseEntity
     @Excel(name = "状态")
     private String stuStatus;
 
+    /** 记录状态 */
+    private String status;
+
+    /** 删除标志 */
+    private String delFlag;
+
     private DormFloor dormFloor;
     private DormDormitory dormDormitory;
     /** 关联用户ID */
@@ -181,6 +187,26 @@ public class DormStudent extends BaseEntity
         return stuStatus;
     }
 
+    public void setStatus(String status) 
+    {
+        this.status = status;
+    }
+
+    public String getStatus() 
+    {
+        return status;
+    }
+
+    public void setDelFlag(String delFlag) 
+    {
+        this.delFlag = delFlag;
+    }
+
+    public String getDelFlag() 
+    {
+        return delFlag;
+    }
+
     public Long getUserId() {
         return userId;
     }
@@ -210,6 +236,8 @@ public class DormStudent extends BaseEntity
             .append("fId", getfId())
             .append("dorId", getDorId())
             .append("stuStatus", getStuStatus())
+            .append("status", getStatus())
+            .append("delFlag", getDelFlag())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())
             .append("updateBy", getUpdateBy())

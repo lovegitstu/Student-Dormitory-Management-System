@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.springboot.dorm.mapper.DormStudentMapper">
+    
+    <resultMap type="DormStudent" id="DormStudentResult">
+        <result property="stuId"    column="stu_id"    />
+        <result property="stuCode"    column="stu_code"    />
+        <result property="stuName"    column="stu_name"    />
+        <result property="stuSex"    column="stu_sex"    />
+        <result property="stuAge"    column="stu_age"    />
+        <result property="stuPhone"    column="stu_phone"    />
+        <result property="stuPhoto"    column="stu_photo"    />
+        <result property="stuMajor"    column="stu_major"    />
+        <result property="dorId"    column="dor_id"    />
+        <result property="fId"    column="f_id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="stuStatus"    column="stu_status"    />
+        <result property="status"    column="status"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <resultMap type="DormStudent" id="DormStudentWithBedResult">
+        <result property="stuId"    column="stu_id"    />
+        <result property="stuCode"    column="stu_code"    />
+        <result property="stuName"    column="stu_name"    />
+        <result property="stuSex"    column="stu_sex"    />
+        <result property="stuAge"    column="stu_age"    />
+        <result property="stuPhone"    column="stu_phone"    />
+        <result property="stuPhoto"    column="stu_photo"    />
+        <result property="stuMajor"    column="stu_major"    />
+        <result property="dorId"    column="dor_id"    />
+        <result property="fId"    column="f_id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="stuStatus"    column="stu_status"    />
+        <result property="status"    column="status"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+        <result property="bedCode"    column="bed_code"    />
+    </resultMap>
+
+    <resultMap type="DormStudent" id="DormStudentWithDetailsResult">
+        <result property="stuId"    column="stu_id"    />
+        <result property="stuCode"    column="stu_code"    />
+        <result property="stuName"    column="stu_name"    />
+        <result property="stuSex"    column="stu_sex"    />
+        <result property="stuAge"    column="stu_age"    />
+        <result property="stuPhone"    column="stu_phone"    />
+        <result property="stuPhoto"    column="stu_photo"    />
+        <result property="stuMajor"    column="stu_major"    />
+        <result property="dorId"    column="dor_id"    />
+        <result property="fId"    column="f_id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="stuStatus"    column="stu_status"    />
+        <result property="status"    column="status"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+        <association property="dormFloor" javaType="com.springboot.dorm.domain.DormFloor">
+            <result property="fId" column="floor_f_id"/>
+            <result property="fName" column="floor_f_name"/>
+            <result property="fNumber" column="floor_f_number"/>
+            <result property="fType" column="floor_f_type"/>
+        </association>
+        <association property="dormDormitory" javaType="com.springboot.dorm.domain.DormDormitory">
+            <result property="dorId" column="dorm_dor_id"/>
+            <result property="dorName" column="dorm_dor_name"/>
+            <result property="dorType" column="dorm_dor_type"/>
+        </association>
+    </resultMap>
+
+    <sql id="selectDormStudentVo">
+        select stu_id, stu_code, stu_name, stu_sex, stu_age, stu_phone, stu_photo, stu_major, dor_id, f_id, user_id, stu_status, status, del_flag, create_by, create_time, update_by, update_time, remark from dorm_student
+    </sql>
+
+    <select id="selectDormStudentList" parameterType="DormStudent" resultMap="DormStudentResult">
+        <include refid="selectDormStudentVo"/>
+        <where>  
+            <if test="stuCode != null  and stuCode != ''"> and stu_code = #{stuCode}</if>
+            <if test="stuName != null  and stuName != ''"> and stu_name like concat('%', #{stuName}, '%')</if>
+            <if test="stuSex != null  and stuSex != ''"> and stu_sex = #{stuSex}</if>
+            <if test="stuAge != null "> and stu_age = #{stuAge}</if>
+            <if test="stuPhone != null  and stuPhone != ''"> and stu_phone = #{stuPhone}</if>
+            <if test="stuMajor != null  and stuMajor != ''"> and stu_major = #{stuMajor}</if>
+            <if test="dorId != null "> and dor_id = #{dorId}</if>
+            <if test="fId != null "> and f_id = #{fId}</if>
+            <if test="userId != null "> and user_id = #{userId}</if>
+            <if test="stuStatus != null  and stuStatus != ''"> and stu_status = #{stuStatus}</if>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+        </where>
+    </select>
+    
+    <select id="selectDormStudentByStuId" parameterType="Long" resultMap="DormStudentResult">
+        <include refid="selectDormStudentVo"/>
+        where stu_id = #{stuId}
+    </select>
+
+    <select id="selectDormStudentByUserId" parameterType="Long" resultMap="DormStudentWithDetailsResult">
+        select 
+            s.stu_id, s.stu_code, s.stu_name, s.stu_sex, s.stu_age, s.stu_phone, s.stu_photo, s.stu_major, 
+            s.dor_id, s.f_id, s.user_id, s.stu_status, s.status, s.del_flag, s.create_by, s.create_time, 
+            s.update_by, s.update_time, s.remark,
+            f.f_id as floor_f_id, f.f_name as floor_f_name, f.f_number as floor_f_number, f.f_type as floor_f_type,
+            d.dor_id as dorm_dor_id, d.dor_name as dorm_dor_name, d.dor_type as dorm_dor_type
+        from dorm_student s
+        left join dorm_floor f on s.f_id = f.f_id
+        left join dorm_dormitory d on s.dor_id = d.dor_id
+        where s.user_id = #{userId}
+    </select>
+
+    <select id="selectStudentInfoByUserId" parameterType="Long" resultMap="DormStudentWithDetailsResult">
+        select 
+            s.stu_id, s.stu_code, s.stu_name, s.stu_sex, s.stu_age, s.stu_phone, s.stu_photo, s.stu_major, 
+            s.dor_id, s.f_id, s.user_id, s.stu_status, s.status, s.del_flag, s.create_by, s.create_time, 
+            s.update_by, s.update_time, s.remark,
+            f.f_id as floor_f_id, f.f_name as floor_f_name, f.f_number as floor_f_number, f.f_type as floor_f_type,
+            d.dor_id as dorm_dor_id, d.dor_name as dorm_dor_name, d.dor_type as dorm_dor_type
+        from dorm_student s
+        left join dorm_floor f on s.f_id = f.f_id
+        left join dorm_dormitory d on s.dor_id = d.dor_id
+        where s.user_id = #{userId}
+    </select>
+
+    <select id="selectDormStudentById" parameterType="Long" resultMap="DormStudentResult">
+        <include refid="selectDormStudentVo"/>
+        where stu_id = #{studentId}
+    </select>
+        
+    <insert id="insertDormStudent" parameterType="DormStudent" useGeneratedKeys="true" keyProperty="stuId">
+        insert into dorm_student
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="stuCode != null">stu_code,</if>
+            <if test="stuName != null">stu_name,</if>
+            <if test="stuSex != null">stu_sex,</if>
+            <if test="stuAge != null">stu_age,</if>
+            <if test="stuPhone != null">stu_phone,</if>
+            <if test="stuPhoto != null">stu_photo,</if>
+            <if test="stuMajor != null">stu_major,</if>
+            <if test="dorId != null">dor_id,</if>
+            <if test="fId != null">f_id,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="stuStatus != null">stu_status,</if>
+            <if test="status != null">status,</if>
+            <if test="delFlag != null">del_flag,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="stuCode != null">#{stuCode},</if>
+            <if test="stuName != null">#{stuName},</if>
+            <if test="stuSex != null">#{stuSex},</if>
+            <if test="stuAge != null">#{stuAge},</if>
+            <if test="stuPhone != null">#{stuPhone},</if>
+            <if test="stuPhoto != null">#{stuPhoto},</if>
+            <if test="stuMajor != null">#{stuMajor},</if>
+            <if test="dorId != null">#{dorId},</if>
+            <if test="fId != null">#{fId},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="stuStatus != null">#{stuStatus},</if>
+            <if test="status != null">#{status},</if>
+            <if test="delFlag != null">#{delFlag},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateDormStudent" parameterType="DormStudent">
+        update dorm_student
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="stuCode != null">stu_code = #{stuCode},</if>
+            <if test="stuName != null">stu_name = #{stuName},</if>
+            <if test="stuSex != null">stu_sex = #{stuSex},</if>
+            <if test="stuAge != null">stu_age = #{stuAge},</if>
+            <if test="stuPhone != null">stu_phone = #{stuPhone},</if>
+            <if test="stuPhoto != null">stu_photo = #{stuPhoto},</if>
+            <if test="stuMajor != null">stu_major = #{stuMajor},</if>
+            <if test="dorId != null">dor_id = #{dorId},</if>
+            <if test="fId != null">f_id = #{fId},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="stuStatus != null">stu_status = #{stuStatus},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="delFlag != null">del_flag = #{delFlag},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where stu_id = #{stuId}
+    </update>
+
+    <delete id="deleteDormStudentByStuId" parameterType="Long">
+        delete from dorm_student where stu_id = #{stuId}
+    </delete>
+
+    <delete id="deleteDormStudentByStuIds" parameterType="String">
+        delete from dorm_student where stu_id in 
+        <foreach item="stuId" collection="array" open="(" separator="," close=")">
+            #{stuId}
+        </foreach>
+    </delete>
+
+    <!-- 统计学生总数 -->
+    <select id="countTotalStudents" resultType="java.lang.Integer">
+        select count(*) from dorm_student
+    </select>
+
+    <!-- 根据学生ID统计申请数量 -->
+    <select id="countByStudentId" parameterType="Long" resultType="java.lang.Integer">
+        select count(*) from (
+            select 1 from dorm_exchange where stu_id = #{studentId}
+            union all
+            select 1 from dorm_come where stu_id = #{studentId}
+            union all
+            select 1 from dorm_repair where stu_id = #{studentId}
+        ) as total_applications
+    </select>
+
+    <!-- 根据日期统计新增学生数 -->
+    <select id="countNewStudentsByDate" parameterType="String" resultType="java.lang.Integer">
+        select count(*) from dorm_student 
+        where date(create_time) = #{date}
+    </select>
+
+    <!-- 根据楼层ID统计本月新增学生数 -->
+    <select id="countNewByFloorIdsThisMonth" parameterType="java.util.List" resultType="java.lang.Integer">
+        select count(*) from dorm_student 
+        where f_id in
+        <foreach item="floorId" collection="list" open="(" separator="," close=")">
+            #{floorId}
+        </foreach>
+        and year(create_time) = year(now())
+        and month(create_time) = month(now())
+    </select>
+
+    <!-- 根据学生ID获取室友信息 -->
+    <select id="getRoommatesByStudentId" parameterType="Long" resultMap="DormStudentWithBedResult">
+        select s.stu_id, s.stu_code, s.stu_name, s.stu_sex, s.stu_age, s.stu_phone, s.stu_photo, s.stu_major, s.dor_id, s.f_id, s.user_id, s.stu_status, s.status, s.del_flag, s.create_by, s.create_time, s.update_by, s.update_time, s.remark,
+               b.bed_code
+        from dorm_student s
+        left join dorm_bed b on s.stu_id = b.stu_id and b.bed_status = '1'
+        where s.dor_id = (
+            select dor_id from dorm_student where stu_id = #{studentId}
+        )
+        and s.stu_id != #{studentId}
+        and s.del_flag = '0'
+    </select>
+
+</mapper>

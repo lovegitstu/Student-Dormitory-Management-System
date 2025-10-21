@@ -46,42 +46,34 @@
       </div>
 
       <div class="charts-section">
+        <!-- 床位统计饼图 -->
         <div class="chart-card">
           <h3>床位统计</h3>
-          <div class="simple-chart">
-            <div class="chart-item" v-for="item in bedStats" :key="item.type">
-              <span class="chart-label">{{ item.type }}</span>
-              <div class="chart-bar">
-                <div class="chart-fill" :style="{width: item.percentage + '%', backgroundColor: item.color}"></div>
-              </div>
-              <span class="chart-value">{{ item.count }}</span>
-            </div>
-          </div>
+          <Charts
+            chart-id="bedStatsChart"
+            :option="bedStatsChartOption"
+            height="300px"
+          />
         </div>
 
+        <!-- 维修统计柱状图 -->
         <div class="chart-card">
           <h3>维修统计</h3>
-          <div class="repair-stats">
-            <div class="repair-item" v-for="item in repairStats" :key="item.status">
-              <span class="repair-label">{{ item.status }}</span>
-              <span class="repair-count" :class="'status-' + item.status">{{ item.count }}</span>
-            </div>
-          </div>
+          <Charts
+            chart-id="repairStatsChart"
+            :option="repairStatsChartOption"
+            height="300px"
+          />
         </div>
 
-        <div class="chart-card">
+        <!-- 申请处理统计 -->
+        <div class="chart-card full-width">
           <h3>申请处理统计</h3>
-          <div class="application-stats">
-            <div class="app-category" v-for="category in applicationStats" :key="category.name">
-              <h4>{{ category.name }}</h4>
-              <div class="app-items">
-                <div class="app-item" v-for="item in category.items" :key="item.status">
-                  <span class="app-label">{{ item.status }}</span>
-                  <span class="app-count">{{ item.count }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <Charts
+            chart-id="applicationStatsChart"
+            :option="applicationStatsChartOption"
+            height="400px"
+          />
         </div>
       </div>
     </div>
@@ -127,57 +119,34 @@
       </div>
 
       <div class="manager-charts">
+        <!-- 维修申请处理饼图 -->
         <div class="chart-card">
           <h3>维修申请处理</h3>
-          <div class="repair-progress">
-            <div class="repair-item" v-for="item in managerData.repairStats" :key="item.status">
-              <span class="repair-label">{{ item.status }}</span>
-              <div class="repair-bar">
-                <div class="repair-fill" :style="{width: item.percentage + '%'}" :class="'status-' + item.status"></div>
-              </div>
-              <span class="repair-count">{{ item.count }}</span>
-            </div>
-          </div>
+          <Charts
+            chart-id="managerRepairStatsChart"
+            :option="managerRepairStatsChartOption"
+            height="300px"
+          />
         </div>
 
+        <!-- 本月工作统计雷达图 -->
         <div class="chart-card">
           <h3>本月工作统计</h3>
-          <div class="work-stats">
-            <div class="work-item">
-              <span class="work-label">巡查次数</span>
-              <span class="work-value">{{ managerData.monthlyInspections || 0 }}</span>
-            </div>
-            <div class="work-item">
-              <span class="work-label">处理维修</span>
-              <span class="work-value">{{ managerData.monthlyRepairs || 0 }}</span>
-            </div>
-            <div class="work-item">
-              <span class="work-label">违规处理</span>
-              <span class="work-value">{{ managerData.monthlyViolations || 0 }}</span>
-            </div>
-            <div class="work-item">
-              <span class="work-label">访客登记</span>
-              <span class="work-value">{{ managerData.monthlyVisitors || 0 }}</span>
-            </div>
-          </div>
+          <Charts
+            chart-id="managerWorkStatsChart"
+            :option="managerWorkStatsChartOption"
+            height="300px"
+          />
         </div>
 
+        <!-- 楼层床位状态柱状图 -->
         <div class="chart-card">
           <h3>楼层床位状态</h3>
-          <div class="floor-status">
-            <div class="floor-item" v-for="floor in managerData.floorStatus" :key="floor.floorName">
-              <div class="floor-header">
-                <span class="floor-name">{{ floor.floorName }}</span>
-                <span class="floor-rate">{{ floor.occupancyRate }}%</span>
-              </div>
-              <div class="floor-beds">
-                <div class="bed-stats">
-                  <span class="bed-occupied">已入住: {{ floor.occupied }}</span>
-                  <span class="bed-available">空闲: {{ floor.available }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <Charts
+            chart-id="managerFloorStatusChart"
+            :option="managerFloorStatusChartOption"
+            height="300px"
+          />
         </div>
       </div>
     </div>
@@ -224,85 +193,33 @@
 
       <div class="student-charts">
         <div class="chart-card">
-          <h3>我的评分详情</h3>
-          <div class="score-details">
-            <div class="score-item-detailed">
-              <div class="score-header">
-                <span class="score-label">卫生评分</span>
-                <span class="score-value">{{ studentInfo.hygieneScore || 0 }}</span>
-              </div>
-              <div class="score-bar">
-                <div class="score-fill hygiene" :style="{width: (studentInfo.hygieneScore || 0) + '%'}"></div>
-              </div>
-            </div>
-            <div class="score-item-detailed">
-              <div class="score-header">
-                <span class="score-label">纪律评分</span>
-                <span class="score-value">{{ studentInfo.disciplineScore || 0 }}</span>
-              </div>
-              <div class="score-bar">
-                <div class="score-fill discipline" :style="{width: (studentInfo.disciplineScore || 0) + '%'}"></div>
-              </div>
-            </div>
-            <div class="score-item-detailed">
-              <div class="score-header">
-                <span class="score-label">安全评分</span>
-                <span class="score-value">{{ studentInfo.safetyScore || 0 }}</span>
-              </div>
-              <div class="score-bar">
-                <div class="score-fill safety" :style="{width: (studentInfo.safetyScore || 0) + '%'}"></div>
-              </div>
-            </div>
-          </div>
+          <h3>宿舍评分详情</h3>
+          <Charts
+            chart-id="student-score-radar"
+            :width="'100%'"
+            :height="'300px'"
+            :option="studentScoreRadarOption"
+          />
         </div>
 
         <div class="chart-card">
           <h3>申请统计</h3>
-          <div class="application-overview">
-            <div class="app-stat-item">
-              <div class="app-icon">🔄</div>
-              <div class="app-info">
-                <span class="app-name">换宿申请</span>
-                <span class="app-count">{{ studentInfo.exchangeApplications || 0 }}</span>
-              </div>
-            </div>
-            <div class="app-stat-item">
-              <div class="app-icon">🏠</div>
-              <div class="app-info">
-                <span class="app-name">入住申请</span>
-                <span class="app-count">{{ studentInfo.comeApplications || 0 }}</span>
-              </div>
-            </div>
-            <div class="app-stat-item">
-              <div class="app-icon">🔧</div>
-              <div class="app-info">
-                <span class="app-name">维修申请</span>
-                <span class="app-count">{{ studentInfo.repairApplications || 0 }}</span>
-              </div>
-            </div>
-          </div>
+          <Charts
+            chart-id="student-application-pie"
+            :width="'100%'"
+            :height="'300px'"
+            :option="studentApplicationChartOption"
+          />
         </div>
 
         <div class="chart-card">
-          <h3>水电费统计</h3>
-          <div class="bills-student">
-            <div class="bill-summary">
-              <div class="bill-total">
-                <span class="bill-label">本月应缴</span>
-                <span class="bill-amount">¥{{ studentInfo.billsStats.monthlyAmount || 0 }}</span>
-              </div>
-              <div class="bill-paid">
-                <span class="bill-label">已缴费</span>
-                <span class="bill-amount paid">¥{{ studentInfo.billsStats.paidAmount || 0 }}</span>
-              </div>
-              <div class="bill-unpaid">
-                <span class="bill-label">未缴费</span>
-                <span class="bill-amount unpaid">¥{{ studentInfo.billsStats.unpaidAmount || 0 }}</span>
-              </div>
-            </div>
-            <div class="payment-status" :class="studentInfo.billsStats.paymentStatus || 'unpaid'">
-              <span>{{ getPaymentStatusText(studentInfo.billsStats.paymentStatus) }}</span>
-            </div>
+          <div class="chart-container">
+            <Charts
+              chart-id="student-bills-pie"
+              :width="'100%'"
+              :height="'350px'"
+              :option="studentBillsChartOption"
+            />
           </div>
         </div>
 
@@ -341,21 +258,12 @@
 
         <div class="chart-card full-width">
           <h3>评分趋势</h3>
-          <div class="score-trend">
-            <div class="trend-item" v-for="(month, index) in studentInfo.scoreTrend" :key="index">
-              <div class="trend-month">{{ month.month }}</div>
-              <div class="trend-bars">
-                <div class="trend-bar hygiene" :style="{height: (month.hygiene * 2) + 'px'}" :title="'卫生: ' + month.hygiene"></div>
-                <div class="trend-bar discipline" :style="{height: (month.discipline * 2) + 'px'}" :title="'纪律: ' + month.discipline"></div>
-                <div class="trend-bar safety" :style="{height: (month.safety * 2) + 'px'}" :title="'安全: ' + month.safety"></div>
-              </div>
-              <div class="trend-scores">
-                <span class="hygiene-score">{{ month.hygiene }}</span>
-                <span class="discipline-score">{{ month.discipline }}</span>
-                <span class="safety-score">{{ month.safety }}</span>
-              </div>
-            </div>
-          </div>
+          <Charts
+            chart-id="student-score-trend"
+            :width="'100%'"
+            :height="'400px'"
+            :option="studentScoreTrendOption"
+          />
         </div>
       </div>
     </div>
@@ -364,10 +272,12 @@
 
 <script>
 import { getAdminStatistics, getManagerStatistics, getStudentStatistics } from '@/api/dormitory/statistics'
+import Charts from '@/components/Charts'
 
 export default {
   name: 'Index',
   components: {
+    Charts
   },
   data() {
     return {
@@ -394,8 +304,7 @@ export default {
         billsStats: {
           monthlyAmount: 0,
           paidAmount: 0,
-          unpaidAmount: 0,
-          paymentStatus: 'none'
+          unpaidAmount: 0
         },
         recentActivities: [],
         roommates: [],
@@ -409,8 +318,586 @@ export default {
         return Math.round((this.overviewData.occupiedBeds / this.overviewData.totalBeds) * 100)
       }
       return 0
+    },
+    // 床位统计饼图配置
+    bedStatsChartOption() {
+      return {
+        title: {
+          text: '床位使用情况',
+          left: 'center',
+          textStyle: {
+            fontSize: 16,
+            color: '#2c3e50'
+          }
+        },
+        tooltip: {
+          trigger: 'item',
+          formatter: '{a} <br/>{b}: {c} ({d}%)'
+        },
+        legend: {
+          orient: 'vertical',
+          left: 'left',
+          data: this.bedStats.map(item => item.type)
+        },
+        series: [
+          {
+            name: '床位统计',
+            type: 'pie',
+            radius: '50%',
+            center: ['50%', '60%'],
+            data: this.bedStats.map(item => ({
+              value: item.count,
+              name: item.type,
+              itemStyle: {
+                color: item.color || '#3498db'
+              }
+            })),
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.5)'
+              }
+            }
+          }
+        ]
+      }
+    },
+    // 维修统计柱状图配置
+    repairStatsChartOption() {
+      const colors = ['#e74c3c', '#f39c12', '#27ae60']
+      return {
+        title: {
+          text: '维修申请状态',
+          left: 'center',
+          textStyle: {
+            fontSize: 16,
+            color: '#2c3e50'
+          }
+        },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'shadow'
+          }
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '3%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'category',
+          data: this.repairStats.map(item => item.status),
+          axisLabel: {
+            color: '#7f8c8d'
+          }
+        },
+        yAxis: {
+          type: 'value',
+          axisLabel: {
+            color: '#7f8c8d'
+          }
+        },
+        series: [
+          {
+            name: '数量',
+            type: 'bar',
+            data: this.repairStats.map((item, index) => ({
+              value: item.count,
+              itemStyle: {
+                color: colors[index] || '#3498db'
+              }
+            })),
+            barWidth: '60%'
+          }
+        ]
+      }
+    },
+    // 申请处理统计柱状图配置
+    applicationStatsChartOption() {
+      const categories = this.applicationStats.map(cat => cat.name)
+      const statusTypes = ['待审核', '已通过', '已拒绝']
+      const colors = ['#f39c12', '#27ae60', '#e74c3c']
+
+      const series = statusTypes.map((status, index) => ({
+        name: status,
+        type: 'bar',
+        data: this.applicationStats.map(cat => {
+          const item = cat.items.find(item => item.status === status)
+          return item ? item.count : 0
+        }),
+        itemStyle: {
+          color: colors[index]
+        }
+      }))
+
+      return {
+        title: {
+          text: '申请处理统计',
+          left: 'center',
+          textStyle: {
+            fontSize: 16,
+            color: '#2c3e50'
+          }
+        },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'shadow'
+          }
+        },
+        legend: {
+          data: statusTypes,
+          top: '10%'
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '3%',
+          top: '20%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'category',
+          data: categories,
+          axisLabel: {
+            color: '#7f8c8d'
+          }
+        },
+        yAxis: {
+          type: 'value',
+          axisLabel: {
+            color: '#7f8c8d'
+          }
+        },
+        series: series
+      }
+    },
+    // 宿管维修申请处理饼图配置
+    managerRepairStatsChartOption() {
+      return {
+        title: {
+          text: '维修申请处理状态',
+          left: 'center',
+          textStyle: {
+            fontSize: 16,
+            color: '#2c3e50'
+          }
+        },
+        tooltip: {
+          trigger: 'item',
+          formatter: '{a} <br/>{b}: {c} ({d}%)'
+        },
+        legend: {
+          orient: 'vertical',
+          left: 'left',
+          data: this.managerData.repairStats ? this.managerData.repairStats.map(item => item.status) : []
+        },
+        series: [
+          {
+            name: '维修申请',
+            type: 'pie',
+            radius: '50%',
+            center: ['50%', '60%'],
+            data: this.managerData.repairStats ? this.managerData.repairStats.map(item => ({
+              value: item.count,
+              name: item.status,
+              itemStyle: {
+                color: item.status === '待处理' ? '#e74c3c' :
+                       item.status === '处理中' ? '#f39c12' : '#27ae60'
+              }
+            })) : [],
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.5)'
+              }
+            }
+          }
+        ]
+      }
+    },
+    // 宿管工作统计雷达图配置
+    managerWorkStatsChartOption() {
+      const workData = [
+        { name: '巡查次数', value: this.managerData.monthlyInspections || 0, max: 100 },
+        { name: '处理维修', value: this.managerData.monthlyRepairs || 0, max: 50 },
+        { name: '违规处理', value: this.managerData.monthlyViolations || 0, max: 30 },
+        { name: '访客登记', value: this.managerData.monthlyVisitors || 0, max: 200 }
+      ]
+
+      return {
+        title: {
+          text: '本月工作统计',
+          left: 'center',
+          textStyle: {
+            fontSize: 16,
+            color: '#2c3e50'
+          }
+        },
+        tooltip: {
+          trigger: 'item'
+        },
+        radar: {
+          indicator: workData.map(item => ({
+            name: item.name,
+            max: item.max
+          })),
+          center: ['50%', '60%'],
+          radius: '60%'
+        },
+        series: [
+          {
+            name: '工作统计',
+            type: 'radar',
+            data: [
+              {
+                value: workData.map(item => item.value),
+                name: '本月工作量',
+                itemStyle: {
+                  color: '#3498db'
+                },
+                areaStyle: {
+                  color: 'rgba(52, 152, 219, 0.3)'
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    // 宿舍评分雷达图配置
+    studentScoreRadarOption() {
+      const indicators = [
+        { name: '卫生评分', max: 100 },
+        { name: '纪律评分', max: 100 },
+        { name: '安全评分', max: 100 }
+      ]
+
+      return {
+        title: {
+          text: '宿舍评分统计',
+          left: 'center',
+          textStyle: {
+            fontSize: 16,
+            color: '#2c3e50'
+          }
+        },
+        tooltip: {
+          trigger: 'item'
+        },
+        radar: {
+          indicator: indicators,
+          center: ['50%', '60%'],
+          radius: '70%'
+        },
+        series: [
+          {
+            name: '评分统计',
+            type: 'radar',
+            data: [
+              {
+                value: [
+                  this.studentInfo.hygieneScore || 0,
+                  this.studentInfo.disciplineScore || 0,
+                  this.studentInfo.safetyScore || 0
+                ],
+                name: '当前评分',
+                itemStyle: {
+                  color: '#9b59b6'
+                },
+                areaStyle: {
+                  color: 'rgba(155, 89, 182, 0.2)'
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    // 学生申请统计饼图配置
+    studentApplicationChartOption() {
+      const applicationData = [
+        { name: '换宿申请', value: this.studentInfo.exchangeApplications || 0, color: '#3498db' },
+        { name: '入住申请', value: this.studentInfo.comeApplications || 0, color: '#2ecc71' },
+        { name: '维修申请', value: this.studentInfo.repairApplications || 0, color: '#e74c3c' }
+      ]
+
+      return {
+        title: {
+          text: '申请统计',
+          left: 'center',
+          textStyle: {
+            fontSize: 16,
+            color: '#2c3e50'
+          }
+        },
+        tooltip: {
+          trigger: 'item',
+          formatter: '{a} <br/>{b}: {c} ({d}%)'
+        },
+        legend: {
+          orient: 'vertical',
+          left: 'left',
+          data: applicationData.map(item => item.name)
+        },
+        series: [
+          {
+            name: '申请统计',
+            type: 'pie',
+            radius: '50%',
+            center: ['50%', '60%'],
+            data: applicationData.map(item => ({
+              value: item.value,
+              name: item.name,
+              itemStyle: {
+                color: item.color
+              }
+            })),
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.5)'
+              }
+            }
+          }
+        ]
+      }
+    },
+    // 学生水电费统计环形图配置
+    studentBillsChartOption() {
+      const paidAmount = this.studentInfo.billsStats?.paidAmount || 0
+      const unpaidAmount = this.studentInfo.billsStats?.unpaidAmount || 0
+      const totalAmount = paidAmount + unpaidAmount
+
+      // 构建数据数组，只包含有值的项
+      const chartData = []
+      if (paidAmount > 0) {
+        chartData.push({
+          value: paidAmount,
+          name: '已缴费',
+          itemStyle: {
+            color: '#27ae60'
+          }
+        })
+      }
+      if (unpaidAmount > 0) {
+        chartData.push({
+          value: unpaidAmount,
+          name: '未缴费',
+          itemStyle: {
+            color: '#e74c3c'
+          }
+        })
+      }
+
+      // 如果没有任何费用数据，显示一个占位项
+      if (chartData.length === 0) {
+        chartData.push({
+          value: 1,
+          name: '暂无费用',
+          itemStyle: {
+            color: '#95a5a6'
+          }
+        })
+      }
+
+      return {
+        title: {
+          text: '水电费统计',
+          left: 'center',
+          textStyle: {
+            fontSize: 16,
+            color: '#2c3e50'
+          }
+        },
+        tooltip: {
+          trigger: 'item',
+          formatter: function(params) {
+            if (params.name === '暂无费用') {
+              return '暂无费用数据'
+            }
+            return params.seriesName + '<br/>' + params.name + ': ¥' + params.value + ' (' + params.percent + '%)'
+          }
+        },
+        legend: {
+          orient: 'vertical',
+          left: 'left',
+          data: chartData.map(item => item.name)
+        },
+        series: [
+          {
+            name: '费用统计',
+            type: 'pie',
+            radius: ['30%', '55%'],
+            center: ['50%', '50%'],
+            data: chartData,
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.5)'
+              }
+            },
+            label: {
+              formatter: function(params) {
+                if (params.name === '暂无费用') {
+                  return '暂无费用'
+                }
+                return '¥' + params.value
+              }
+            }
+          }
+        ]
+      }
+    },
+    // 学生评分趋势折线图配置
+    studentScoreTrendOption() {
+      const months = this.studentInfo.scoreTrend?.map(item => item.month) || []
+      const hygieneData = this.studentInfo.scoreTrend?.map(item => item.hygiene) || []
+      const disciplineData = this.studentInfo.scoreTrend?.map(item => item.discipline) || []
+      const safetyData = this.studentInfo.scoreTrend?.map(item => item.safety) || []
+
+      return {
+        title: {
+          text: '评分趋势',
+          left: 'center',
+          textStyle: {
+            fontSize: 16,
+            color: '#2c3e50'
+          }
+        },
+        tooltip: {
+          trigger: 'axis'
+        },
+        legend: {
+          data: ['卫生评分', '纪律评分', '安全评分'],
+          bottom: 10
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '15%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'category',
+          boundaryGap: false,
+          data: months,
+          axisLabel: {
+            color: '#7f8c8d'
+          }
+        },
+        yAxis: {
+          type: 'value',
+          min: 0,
+          max: 100,
+          axisLabel: {
+            color: '#7f8c8d'
+          }
+        },
+        series: [
+          {
+            name: '卫生评分',
+            type: 'line',
+            data: hygieneData,
+            itemStyle: {
+              color: '#3498db'
+            },
+            smooth: true
+          },
+          {
+            name: '纪律评分',
+            type: 'line',
+            data: disciplineData,
+            itemStyle: {
+              color: '#e74c3c'
+            },
+            smooth: true
+          },
+          {
+            name: '安全评分',
+            type: 'line',
+            data: safetyData,
+            itemStyle: {
+              color: '#f39c12'
+            },
+            smooth: true
+          }
+        ]
+      }
+    },
+    // 宿管楼层床位状态柱状图配置
+    managerFloorStatusChartOption() {
+      const floorNames = this.managerData.floorStatus ? this.managerData.floorStatus.map(floor => floor.floorName) : []
+      const occupiedData = this.managerData.floorStatus ? this.managerData.floorStatus.map(floor => floor.occupied) : []
+      const availableData = this.managerData.floorStatus ? this.managerData.floorStatus.map(floor => floor.available) : []
+
+      return {
+        title: {
+          text: '楼层床位状态',
+          left: 'center',
+          textStyle: {
+            fontSize: 16,
+            color: '#2c3e50'
+          }
+        },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'shadow'
+          }
+        },
+        legend: {
+          data: ['已入住', '空闲'],
+          top: '10%'
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '3%',
+          top: '20%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'category',
+          data: floorNames,
+          axisLabel: {
+            color: '#7f8c8d'
+          }
+        },
+        yAxis: {
+          type: 'value',
+          axisLabel: {
+            color: '#7f8c8d'
+          }
+        },
+        series: [
+          {
+            name: '已入住',
+            type: 'bar',
+            data: occupiedData,
+            itemStyle: {
+              color: '#27ae60'
+            }
+          },
+          {
+            name: '空闲',
+            type: 'bar',
+            data: availableData,
+            itemStyle: {
+              color: '#95a5a6'
+            }
+          }
+        ]
+      }
     }
   },
+
   mounted() {
     this.getUserRole()
     this.loadDashboardData()
@@ -420,11 +907,11 @@ export default {
       // 从用户信息或store中获取用户角色
       const userInfo = this.$store.getters && this.$store.getters.userInfo
       console.log('用户信息:', userInfo)
-      
+
       if (userInfo && userInfo.roles && userInfo.roles.length > 0) {
         // 适配后端返回的角色数据格式
         let role = null
-        
+
         // 检查roles是字符串数组还是对象数组
         if (typeof userInfo.roles[0] === 'string') {
           // 后端返回的是字符串数组，如 ["man", "admin"]
@@ -435,9 +922,9 @@ export default {
           role = userInfo.roles[0].roleKey
           console.log('角色数据为对象数组，第一个角色Key:', role)
         }
-        
+
         console.log('解析出的用户角色Key:', role)
-        
+
         if (role === 'admin' || role === 'subadmin') {
           this.userRole = 'admin'
         } else if (role === 'manager' || role === 'man') {
@@ -450,7 +937,7 @@ export default {
         console.warn('未找到用户角色信息，默认设置为学生')
         this.userRole = 'student'
       }
-      
+
       console.log('最终确定的用户角色:', this.userRole)
     },
     async loadDashboardData() {
@@ -469,15 +956,15 @@ export default {
     async loadAdminData() {
       try {
         console.log('开始加载管理员数据...')
-        
+
         // 调用后端API获取管理员统计数据
         const response = await getAdminStatistics()
         console.log('管理员统计数据:', response)
-        
+
         if (response && response.data) {
           // 直接从response.data获取数据，后端返回的是扁平化结构
           const data = response.data
-          
+
           // 映射后端返回的字段到前端期望的结构
           this.overviewData = {
             totalDorms: data.totalRooms || 0,        // 后端返回totalRooms，前端显示为总宿舍数
@@ -487,12 +974,12 @@ export default {
             occupancyRate: data.occupancyRate || 0,  // 入住率
             totalFloors: data.totalFloors || 0       // 总楼层数
           }
-          
+
           // 构建床位统计数据
           const totalBeds = data.totalBeds || 0
           const occupiedBeds = data.occupiedBeds || 0
           const availableBeds = totalBeds - occupiedBeds
-          
+
           this.bedStats = [
             {
               type: '已入住',
@@ -507,7 +994,7 @@ export default {
               color: '#95a5a6'
             }
           ]
-          
+
           // 构建维修统计数据
           this.repairStats = [
             {
@@ -523,7 +1010,7 @@ export default {
               count: data.completedRepairs || 0
             }
           ]
-          
+
           // 构建申请处理统计数据
           this.applicationStats = [
             {
@@ -543,8 +1030,8 @@ export default {
               ]
             }
           ]
-          
-          
+
+
           console.log('处理后的数据:', {
             overviewData: this.overviewData,
             bedStats: this.bedStats,
@@ -571,15 +1058,15 @@ export default {
     async loadManagerData() {
       try {
         console.log('开始加载宿管数据...')
-        
+
         // 调用后端API获取宿管统计数据
         const response = await getManagerStatistics()
         console.log('宿管统计数据:', response)
-        
+
         if (response && response.data) {
           // 映射后端返回的字段到前端期望的结构
           const data = response.data
-          
+
           this.managerData = {
             managedFloors: data.managedFloors || 0,
             managedBeds: data.managedBeds || 0,
@@ -590,7 +1077,7 @@ export default {
             monthlyRepairs: data.monthlyRepairs || 0,
             monthlyViolations: data.monthlyViolations || 0,
             monthlyVisitors: data.monthlyVisitors || 0,
-            
+
             // 维修申请处理统计
             repairStats: [
               {
@@ -609,11 +1096,11 @@ export default {
                 percentage: this.calculatePercentage(data.completedRepairs, data.totalRepairs)
               }
             ],
-            
+
             // 楼层床位状态
             floorStatus: this.generateFloorStatus(data)
           }
-          
+
           console.log('处理后的宿管数据:', this.managerData)
         }
       } catch (error) {
@@ -637,34 +1124,34 @@ export default {
     async loadStudentData() {
       try {
         console.log('开始加载学生数据...')
-        
+
         // 调用后端API获取学生统计数据
         const response = await getStudentStatistics()
         console.log('学生统计数据:', response)
-        
+
         if (response && response.data) {
           const data = response.data
           console.log('处理后端返回数据:', data)
-          
+
           // 处理学生基本信息
           const studentInfo = data.studentInfo || {}
           const dormFloor = studentInfo.dormFloor || {}
           const dormDormitory = studentInfo.dormDormitory || {}
-          
+
           // 处理床位信息
           const bedInfo = data.bedInfo || {}
-          
+
           // 处理评分信息
           const dormScores = data.dormScores || []
           const latestScore = dormScores.length > 0 ? dormScores[0] : {}
-          
+
           // 处理水电费统计 - 确保有默认值
           const billsStats = data.billsStats || {
             monthlyAmount: 0,
             paidAmount: 0,
             unpaidAmount: 0
           }
-          
+
           // 映射到前端期望的字段结构
           this.studentInfo = {
             name: studentInfo.stuName || '未知',
@@ -694,7 +1181,7 @@ export default {
             roommates: data.roommates || [],
             scoreTrend: data.scoreTrend || dormScores.slice(0, 6) || [] // 使用最近6个月的评分记录
           }
-          
+
           console.log('映射后的学生信息:', this.studentInfo)
         }
       } catch (error) {
@@ -744,17 +1231,17 @@ export default {
         }))
       }
     },
-    
+
     // 计算百分比的辅助方法
     calculatePercentage(value, total) {
       if (!total || total === 0) return 0
       return Math.round((value / total) * 100)
     },
-    
+
     // 生成楼层状态数据 - 使用后端返回的真实数据
     generateFloorStatus(data) {
       const floors = []
-      
+
       // 如果后端返回了楼层占用率数据，直接使用
       if (data.floorOccupancy && Array.isArray(data.floorOccupancy)) {
         return data.floorOccupancy.map(floor => ({
@@ -765,22 +1252,22 @@ export default {
           occupancyRate: Math.round(floor.occupancyRate || 0)
         }))
       }
-      
+
       // 如果没有详细楼层数据，使用管理的楼层数和床位数
       const floorCount = data.managedFloors || 3
       const totalManagedBeds = data.managedBeds || 0
       const totalOccupiedBeds = data.occupiedBeds || 0
-      
+
       // 平均分配床位到各楼层
       const bedsPerFloor = Math.floor(totalManagedBeds / floorCount)
       const occupiedPerFloor = Math.floor(totalOccupiedBeds / floorCount)
-      
+
       for (let i = 1; i <= floorCount; i++) {
         const totalBeds = bedsPerFloor
         const occupied = occupiedPerFloor
         const available = totalBeds - occupied
         const occupancyRate = totalBeds > 0 ? Math.round((occupied / totalBeds) * 100) : 0
-        
+
         floors.push({
           floorName: `${i}楼`,
           totalBeds,
@@ -789,10 +1276,10 @@ export default {
           occupancyRate
         })
       }
-      
+
       return floors
     },
-    
+
     // 获取支付状态
     getPaymentStatus(paidAmount, totalAmount) {
       if (!totalAmount || totalAmount === 0) return 'none'
@@ -800,7 +1287,7 @@ export default {
       if (paidAmount > 0) return 'partial'
       return 'unpaid'
     },
-    
+
     // 获取支付状态文本
     getPaymentStatusText(status) {
       const statusMap = {
@@ -811,7 +1298,7 @@ export default {
       }
       return statusMap[status] || '未知状态'
     },
-    
+
     // 获取活动图标
     getActivityIcon(type) {
       const iconMap = {
@@ -1427,5 +1914,8 @@ export default {
   font-size: 12px;
 }
 </style>
+
+
+
 
 
