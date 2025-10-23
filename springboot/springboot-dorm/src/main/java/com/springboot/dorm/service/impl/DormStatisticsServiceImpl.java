@@ -22,14 +22,15 @@ import com.springboot.dorm.mapper.DormVisitMapper;
 import com.springboot.dorm.mapper.DormScoreMapper;
 import com.springboot.dorm.domain.DormStudent;
 import com.springboot.dorm.domain.DormScore;
+import com.springboot.dorm.domain.DormFloor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * 宿舍统计Service业务层处理
  * 
- *
- * @date 2025-10-30
+ * @author springboot
+ * @date 2025-09-16
  */
 @Service
 public class DormStatisticsServiceImpl implements IDormStatisticsService 
@@ -153,6 +154,9 @@ public class DormStatisticsServiceImpl implements IDormStatisticsService
             
             // 本月统计
             result.put("monthlyStats", getMonthlyManagerStats(floorIds));
+            
+            // 添加楼层床位状态数据 - 这是前端图表需要的关键数据
+            result.put("floorOccupancy", getFloorOccupancyByManagerFloors(floorIds));
             
             logger.info("宿管统计数据获取成功，用户ID: {}", userId);
         } catch (Exception e) {
@@ -706,5 +710,46 @@ public class DormStatisticsServiceImpl implements IDormStatisticsService
         }
         
         return scoreTrend;
+    }
+
+    /**
+     * 获取宿管负责楼层的床位占用情况
+     */
+    private List<Map<String, Object>> getFloorOccupancyByManagerFloors(List<Long> floorIds) {
+        List<Map<String, Object>> floorOccupancy = new ArrayList<>();
+        
+        for (Long floorId : floorIds) {
+            // 获取楼层信息
+            DormFloor floor = dormFloorMapper.selectDormFloorByFId(floorId);
+            if (floor == null) {
+                continue;
+            }
+            
+            // 统计该楼层的床位数据
+            Integer totalBeds = dormBedMapper.countByFloorId(floorId);
+            Integer occupiedBeds = dormBedMapper.countOccupiedByFloorId(floorId);
+            Integer availableBeds = totalBeds - occupiedBeds;
+            
+            // 计算入住率
+            double occupancyRate = totalBeds > 0 ? (double) occupiedBeds / totalBeds * 100 : 0.0;
+            
+            Map<String, Object> floorData = new HashMap<>();
+            floorData.put("floorName", floor.getfName());
+            floorData.put("totalBeds", totalBeds);
+            floorData.put("occupiedBeds", occupiedBeds);
+            floorData.put("availableBeds", availableBeds);
+            floorData.put("occupancyRate", Math.round(occupancyRate * 100.0) / 100.0);
+            
+            floorOccupancy.add(floorData);
+            
+            // 添加日志输出
+            System.out.println("楼层: " + floor.getfName() + 
+                             ", 总床位: " + totalBeds + 
+                             ", 已占用: " + occupiedBeds + 
+                             ", 可用: " + availableBeds + 
+                             ", 入住率: " + occupancyRate + "%");
+        }
+        
+        return floorOccupancy;
     }
 }

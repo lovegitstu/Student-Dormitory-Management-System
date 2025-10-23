@@ -164,4 +164,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             end as occupancyRate
         from dorm_bed
     </select>
+
+    <!-- 根据单个楼层ID统计床位数量 -->
+    <select id="countByFloorId" parameterType="java.lang.Long" resultType="java.lang.Integer">
+        select count(*) from dorm_bed db
+        inner join dorm_dormitory dr on db.dor_id = dr.dor_id
+        where dr.f_id = #{floorId}
+    </select>
+
+    <!-- 根据单个楼层ID统计已占用床位数量 -->
+    <select id="countOccupiedByFloorId" parameterType="java.lang.Long" resultType="java.lang.Integer">
+        select count(*) from dorm_bed db
+        inner join dorm_dormitory dr on db.dor_id = dr.dor_id
+        where db.stu_id is not null and dr.f_id = #{floorId}
+    </select>
 </mapper>

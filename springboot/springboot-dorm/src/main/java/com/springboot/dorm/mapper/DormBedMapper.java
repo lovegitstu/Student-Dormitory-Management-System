@@ -96,4 +96,20 @@ public interface DormBedMapper
      * @return 入住率
      */
     public Double getOccupancyRateByDate(String date);
+
+    /**
+     * 根据楼层ID统计床位数
+     * 
+     * @param floorId 楼层ID
+     * @return 床位数
+     */
+    public Integer countByFloorId(Long floorId);
+
+    /**
+     * 根据楼层ID统计已占用床位数
+     * 
+     * @param floorId 楼层ID
+     * @return 已占用床位数
+     */
+    public Integer countOccupiedByFloorId(Long floorId);
 }

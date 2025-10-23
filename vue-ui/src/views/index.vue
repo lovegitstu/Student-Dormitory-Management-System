@@ -140,12 +140,12 @@
         </div>
 
         <!-- 楼层床位状态柱状图 -->
-        <div class="chart-card">
+        <div class="chart-card floor-status-chart">
           <h3>楼层床位状态</h3>
           <Charts
             chart-id="managerFloorStatusChart"
             :option="managerFloorStatusChartOption"
-            height="300px"
+            height="400px"
           />
         </div>
       </div>
@@ -397,7 +397,19 @@ export default {
         yAxis: {
           type: 'value',
           axisLabel: {
-            color: '#7f8c8d'
+            color: '#7f8c8d',
+            fontSize: 12
+          },
+          axisLine: {
+            lineStyle: {
+              color: '#bdc3c7'
+            }
+          },
+          splitLine: {
+            lineStyle: {
+              color: '#ecf0f1',
+              type: 'dashed'
+            }
           }
         },
         series: [
@@ -453,10 +465,10 @@ export default {
           top: '10%'
         },
         grid: {
-          left: '3%',
-          right: '4%',
-          bottom: '3%',
-          top: '20%',
+          left: '10%',
+          right: '10%',
+          bottom: '15%',
+          top: '30%',
           containLabel: true
         },
         xAxis: {
@@ -842,7 +854,7 @@ export default {
           text: '楼层床位状态',
           left: 'center',
           textStyle: {
-            fontSize: 16,
+            fontSize: 14,
             color: '#2c3e50'
           }
         },
@@ -854,7 +866,10 @@ export default {
         },
         legend: {
           data: ['已入住', '空闲'],
-          top: '10%'
+          top: '8%',
+          textStyle: {
+            fontSize: 12
+          }
         },
         grid: {
           left: '3%',
@@ -867,7 +882,15 @@ export default {
           type: 'category',
           data: floorNames,
           axisLabel: {
-            color: '#7f8c8d'
+            color: '#7f8c8d',
+            fontSize: 12,
+            interval: 0,
+            rotate: 0
+          },
+          axisLine: {
+            lineStyle: {
+              color: '#bdc3c7'
+            }
           }
         },
         yAxis: {
@@ -883,6 +906,13 @@ export default {
             data: occupiedData,
             itemStyle: {
               color: '#27ae60'
+            },
+            barWidth: '35%',
+            label: {
+              show: true,
+              position: 'top',
+              fontSize: 11,
+              color: '#2c3e50'
             }
           },
           {
@@ -891,6 +921,13 @@ export default {
             data: availableData,
             itemStyle: {
               color: '#95a5a6'
+            },
+            barWidth: '35%',
+            label: {
+              show: true,
+              position: 'top',
+              fontSize: 11,
+              color: '#2c3e50'
             }
           }
         ]
@@ -1378,9 +1415,10 @@ export default {
 
 .chart-card {
   background: white;
-  padding: 20px;
+  padding: 15px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: visible;
 }
 
 .chart-card h3 {
@@ -1422,6 +1460,17 @@ export default {
   width: 40px;
   text-align: right;
   font-weight: bold;
+}
+
+/* 楼层床位状态图表专用样式 */
+.floor-status-chart {
+  min-height: 480px !important;
+  overflow: visible !important;
+}
+
+.floor-status-chart h3 {
+  margin-bottom: 10px;
+  font-size: 14px;
 }
 
 .repair-stats {
