@@ -20,6 +20,8 @@ import com.springboot.dorm.domain.DormDormitory;
 import com.springboot.dorm.service.IDormDormitoryService;
 import com.springboot.common.utils.poi.ExcelUtil;
 import com.springboot.common.core.page.TableDataInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 宿舍信息Controller
@@ -31,6 +33,8 @@ import com.springboot.common.core.page.TableDataInfo;
 @RequestMapping("/dormitory/dorm")
 public class DormDormitoryController extends BaseController
 {
+    private static final Logger logger = LoggerFactory.getLogger(DormDormitoryController.class);
+    
     @Autowired
     private IDormDormitoryService dormDormitoryService;
 
@@ -80,7 +84,27 @@ public class DormDormitoryController extends BaseController
     @GetMapping(value = "/{dorId}")
     public AjaxResult getInfo(@PathVariable("dorId") Long dorId)
     {
-        return success(dormDormitoryService.selectDormDormitoryByDorId(dorId));
+        logger.info("=== 获取宿舍信息详细信息接口调用开始 ===");
+        logger.info("请求的宿舍ID: {}", dorId);
+        
+        try {
+            DormDormitory dormitory = dormDormitoryService.selectDormDormitoryByDorId(dorId);
+            logger.info("查询到的宿舍信息: {}", dormitory);
+            
+            if (dormitory != null) {
+                logger.info("宿舍信息查询成功 - ID: {}, 名称: {}, 类型: {}", 
+                    dormitory.getDorId(), dormitory.getDorName(), dormitory.getDorType());
+                return success(dormitory);
+            } else {
+                logger.warn("未找到宿舍ID为 {} 的宿舍信息", dorId);
+                return error("宿舍不存在");
+            }
+        } catch (Exception e) {
+            logger.error("查询宿舍信息失败，宿舍ID: {}", dorId, e);
+            return error("查询宿舍信息失败: " + e.getMessage());
+        } finally {
+            logger.info("=== 获取宿舍信息详细信息接口调用结束 ===");
+        }
     }
 
     /**

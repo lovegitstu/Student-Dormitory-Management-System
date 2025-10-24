@@ -78,15 +78,28 @@
           <dict-tag :options="dict.type.approval_status" :value="scope.row.kbOpinion" />
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="250">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="380">
         <template slot-scope="scope">
-          <el-button size="small" type="warning" icon="el-icon-s-check" @click="handleUpdate(scope.row)"
-            v-hasPermi="['dormitory:leave:edit']" v-hasRole="['admin', 'subadmin', 'man']">审核</el-button>
-          <el-button v-if="scope.row.kbOpinion === '4' || scope.row.kbOpinion === 4" 
-            size="small" type="success" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-            v-hasPermi="['dormitory:leave:edit']" v-hasRole="['admin', 'subadmin', 'student']">修改</el-button>
-          <el-button size="small" type="danger" icon="el-icon-delete" @click="handleDelete(scope.row)"
-            v-hasPermi="['dormitory:leave:remove']" v-hasRole="['admin', 'subadmin', 'student']">删除</el-button>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; padding: 6px 0;">
+            <el-button size="small" type="success" icon="el-icon-check" @click="handleApprove(scope.row, 1)"
+              v-hasPermi="['dormitory:leave:approve']" v-hasRole="['admin', 'subadmin', 'man']"
+              v-if="scope.row.opinion === 0"
+              style="margin: 0; min-width: 75px;">通过</el-button>
+            <el-button size="small" type="danger" icon="el-icon-close" @click="handleApprove(scope.row, 2)"
+              v-hasPermi="['dormitory:leave:approve']" v-hasRole="['admin', 'subadmin', 'man']"
+              v-if="scope.row.opinion === 0"
+              style="margin: 0; min-width: 75px;">拒绝</el-button>
+            <el-button size="small" type="warning" icon="el-icon-s-check" @click="handleUpdate(scope.row)"
+              v-hasPermi="['dormitory:leave:edit']" v-hasRole="['admin', 'subadmin', 'man']"
+              style="margin: 0; min-width: 75px;">审核</el-button>
+            <el-button v-if="scope.row.opinion === 0" 
+              size="small" type="success" icon="el-icon-edit" @click="handleUpdate(scope.row)"
+              v-hasPermi="['dormitory:leave:edit']" v-hasRole="['admin', 'subadmin', 'student']"
+              style="margin: 0; min-width: 75px;">修改</el-button>
+            <el-button size="small" type="danger" icon="el-icon-delete" @click="handleDelete(scope.row)"
+              v-hasPermi="['dormitory:leave:remove']" v-hasRole="['admin', 'subadmin', 'student']"
+              style="margin: 0; min-width: 75px;">删除</el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>

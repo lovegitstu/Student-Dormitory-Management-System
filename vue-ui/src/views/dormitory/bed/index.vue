@@ -48,6 +48,10 @@
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
           v-hasPermi="['dormitory:bed:export']">导出</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button type="info" plain icon="el-icon-magic-stick" size="mini" @click="handleAutoAllocateAll"
+          v-hasPermi="['dormitory:bed:edit']" v-hasRole="['admin', 'subadmin']">自动分配</el-button>
+      </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -68,16 +72,22 @@
       </el-table-column>
       <el-table-column label="入住人" align="center" prop="stuName" />
       <!-- <el-table-column label="备注" align="center" prop="remark" /> -->
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="200">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="380">
         <template slot-scope="scope">
-          <el-button size="small" type="warning" icon="el-icon-right" v-hasPermi="['dormitory:bed:edit']"
-            @click="handlecheckIn(scope.row)" v-hasRole="['student']">入住</el-button>
-          <el-button size="small" type="danger" icon="el-icon-remove" v-hasPermi="['dormitory:bed:edit']"
-            @click="handlecheckOut(scope.row)" v-hasRole="['student', 'subadmin']">退宿</el-button>
-          <el-button size="small" type="success" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-            v-hasPermi="['dormitory:bed:edit']" v-hasRole="['admin', 'subadmin']">修改</el-button>
-          <el-button size="small" type="danger" icon="el-icon-delete" @click="handleDelete(scope.row)"
-            v-hasPermi="['dormitory:bed:remove']">删除</el-button>
+          <div style="display: flex; flex-wrap: nowrap; gap: 8px; justify-content: center; align-items: center; padding: 6px 0;">
+            <el-button size="small" type="warning" icon="el-icon-right" v-hasPermi="['dormitory:bed:edit']"
+              @click="handlecheckIn(scope.row)" v-hasRole="['student']" 
+              style="margin: 0; min-width: 75px;">入住</el-button>
+            <el-button size="small" type="danger" icon="el-icon-remove" v-hasPermi="['dormitory:bed:edit']"
+              @click="handlecheckOut(scope.row)" v-hasRole="['admin', 'subadmin']"
+              style="margin: 0; min-width: 75px;">退宿</el-button>
+            <el-button size="small" type="success" icon="el-icon-edit" @click="handleUpdate(scope.row)"
+              v-hasPermi="['dormitory:bed:edit']" v-hasRole="['admin', 'subadmin']"
+              style="margin: 0; min-width: 75px;">修改</el-button>
+            <el-button size="small" type="danger" icon="el-icon-delete" @click="handleDelete(scope.row)"
+              v-hasPermi="['dormitory:bed:remove']"
+              style="margin: 0; min-width: 75px;">删除</el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -123,7 +133,7 @@
 </template>
 
 <script>
-import { listBed, getBed, delBed, addBed, updateBed } from "@/api/dormitory/bed";
+import { listBed, getBed, delBed, addBed, updateBed, autoAllocateAll } from "@/api/dormitory/bed";
 import { listDorm, getDorm } from "@/api/dormitory/dorm";
 import { getUserProfile, updateUserProfile } from "@/api/system/user";
 import { getStudentByUserId } from "@/api/dormitory/student";
@@ -342,12 +352,22 @@ export default {
       getBed(bedId).then(response => {
         this.form = response.data;
         
-        // 如果是管理员，直接允许退宿
-        if (this.crruentRole == 'sysadmin') {
-          this.form.bedStatus = "0";
-          this.form.stuId = null; // 清空学生ID
-          this.form.stuName = null; // 清空学生姓名
-          updateBed(this.form).then(response => {
+        // 如果是管理员或宿管，允许退宿
+        if (this.crruentRole == 'sysadmin' || this.crruentRole == 'admin' || this.crruentRole == 'subadmin') {
+          // 保存原始学生信息，用于后端数据一致性处理
+          const originalStuId = this.form.stuId;
+          const originalStuName = this.form.stuName;
+          
+          // 创建退宿请求对象，保留原始学生ID让后端处理数据一致性
+          const checkoutForm = {
+            ...this.form,
+            bedStatus: "0",
+            stuId: null, // 目标状态：清空学生ID
+            stuName: null, // 目标状态：清空学生姓名
+            originalStuId: originalStuId // 传递原始学生ID给后端处理
+          };
+          
+          updateBed(checkoutForm).then(response => {
             this.$modal.msgSuccess("退宿成功");
             this.getList();
           }).catch(error => {
@@ -398,6 +418,29 @@ export default {
       this.download('dormitory/bed/export', {
         ...this.queryParams
       }, `bed_${new Date().getTime()}.xlsx`)
+    },
+    /** 自动分配所有未分配学生 */
+    handleAutoAllocateAll () {
+      this.$modal.confirm('确定要为所有未分配宿舍的学生自动分配宿舍吗？').then(() => {
+        this.loading = true;
+        autoAllocateAll().then(response => {
+          this.loading = false;
+          if (response.code === 200) {
+            const data = response.data;
+            const message = (data && data.message) || response.msg || '自动分配成功';
+            this.$modal.msgSuccess(message);
+            this.getList(); // 刷新列表
+          } else {
+            this.$modal.msgError(response.msg || '自动分配失败');
+          }
+        }).catch(error => {
+          this.loading = false;
+          console.error('自动分配失败:', error);
+          this.$modal.msgError('自动分配失败，请稍后重试');
+        });
+      }).catch(() => {
+        // 用户取消操作
+      });
     }
   }
 };

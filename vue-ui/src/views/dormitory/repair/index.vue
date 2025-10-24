@@ -98,15 +98,20 @@
           <dict-tag :options="dict.type.repair_grade" :value="scope.row.repairGrade" />
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="250">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="320">
         <template slot-scope="scope">
-          <el-button size="small" type="warning" icon="el-icon-s-check" @click="handleApprove(scope.row)"
-            v-hasPermi="['dormitory:repair:approve']" v-hasRole="['man', 'admin']" v-if="scope.row.repairStatus !== '2'">处理</el-button>
-          <el-button v-if="scope.row.repairStatus === '1'" 
-            size="small" type="success" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-            v-hasPermi="['dormitory:repair:edit']">修改</el-button>
-          <el-button size="small" type="danger" icon="el-icon-delete" @click="handleDelete(scope.row)"
-            v-hasPermi="['dormitory:repair:remove']">删除</el-button>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; padding: 6px 0;">
+            <el-button size="small" type="warning" icon="el-icon-s-check" @click="handleApprove(scope.row)"
+              v-hasPermi="['dormitory:repair:approve']" v-hasRole="['man', 'admin']" v-if="scope.row.repairStatus !== '2'"
+              style="margin: 0; min-width: 75px;">处理</el-button>
+            <el-button v-if="scope.row.repairStatus === '1'" 
+              size="small" type="success" icon="el-icon-edit" @click="handleUpdate(scope.row)"
+              v-hasPermi="['dormitory:repair:edit']"
+              style="margin: 0; min-width: 75px;">修改</el-button>
+            <el-button size="small" type="danger" icon="el-icon-delete" @click="handleDelete(scope.row)"
+              v-hasPermi="['dormitory:repair:remove']"
+              style="margin: 0; min-width: 75px;">删除</el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>

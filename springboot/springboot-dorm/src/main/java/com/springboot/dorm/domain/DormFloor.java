@@ -34,6 +34,14 @@ public class DormFloor extends BaseEntity
     @Excel(name = "宿舍总数")
     private Long fDormnumber;
 
+    /** 宿舍楼性别 */
+    @Excel(name = "宿舍楼性别")
+    private String fGender;
+
+    /** 宿舍楼状态 */
+    @Excel(name = "宿舍楼状态")
+    private String fStatus;
+
     public void setfId(Long fId) 
     {
         this.fId = fId;
@@ -80,6 +88,22 @@ public class DormFloor extends BaseEntity
         return fDormnumber;
     }
 
+    public void setfGender(String fGender) {
+        this.fGender = fGender;
+    }
+
+    public String getfGender() {
+        return fGender;
+    }
+
+    public void setfStatus(String fStatus) {
+        this.fStatus = fStatus;
+    }
+
+    public String getfStatus() {
+        return fStatus;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
@@ -88,6 +112,8 @@ public class DormFloor extends BaseEntity
             .append("fNumber", getfNumber())
             .append("fType", getfType())
             .append("fDormnumber", getfDormnumber())
+            .append("fGender", getfGender())
+            .append("fStatus", getfStatus())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())
             .append("updateBy", getUpdateBy())

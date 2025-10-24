@@ -11,6 +11,11 @@ NProgress.configure({ showSpinner: false })
 const whiteList = ['/login', '/register']
 
 router.beforeEach((to, from, next) => {
+  console.log('=== 路由导航守卫开始 ===')
+  console.log('从路由:', from.path)
+  console.log('到路由:', to.path)
+  console.log('路由匹配结果:', to.matched)
+  
   NProgress.start()
   if (getToken()) {
     to.meta.title && store.dispatch('settings/setTitle', to.meta.title)
@@ -25,17 +30,21 @@ router.beforeEach((to, from, next) => {
         store.dispatch('GetInfo').then(() => {
           isRelogin.show = false
           store.dispatch('GenerateRoutes').then(accessRoutes => {
+            console.log('获取到用户角色和权限路由')
+            console.log('生成的可访问路由:', accessRoutes)
             // 根据roles权限生成可访问的路由表
             router.addRoutes(accessRoutes) // 动态添加可访问路由表
             next({ ...to, replace: true }) // hack方法 确保addRoutes已完成
           })
         }).catch(err => {
+            console.error('获取用户信息失败:', err)
             store.dispatch('LogOut').then(() => {
               Message.error(err)
               next({ path: '/' })
             })
           })
       } else {
+        console.log('用户已有角色权限，直接通过')
         next()
       }
     }

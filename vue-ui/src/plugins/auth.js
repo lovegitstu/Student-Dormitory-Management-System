@@ -3,11 +3,17 @@ import store from '@/store'
 function authPermission(permission) {
   const all_permission = "*:*:*";
   const permissions = store.getters && store.getters.permissions
+  console.log('权限验证 - 检查权限:', permission)
+  console.log('权限验证 - 用户权限列表:', permissions)
+  
   if (permission && permission.length > 0) {
-    return permissions.some(v => {
+    const result = permissions.some(v => {
       return all_permission === v || v === permission
     })
+    console.log('权限验证 - 验证结果:', result)
+    return result
   } else {
+    console.log('权限验证 - 权限为空，返回false')
     return false
   }
 }

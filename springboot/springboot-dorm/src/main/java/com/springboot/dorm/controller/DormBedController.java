@@ -1,6 +1,8 @@
 package com.springboot.dorm.controller;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,8 @@ import com.springboot.dorm.domain.DormBed;
 import com.springboot.dorm.domain.DormStudent;
 import com.springboot.dorm.service.IDormBedService;
 import com.springboot.dorm.service.IDormStudentService;
+import com.springboot.dorm.service.IDormitoryAllocationService;
+import com.springboot.dorm.algorithm.DormitoryAllocationAlgorithm.AllocationResult;
 import com.springboot.common.utils.poi.ExcelUtil;
 import com.springboot.common.core.page.TableDataInfo;
 
@@ -38,6 +42,9 @@ public class DormBedController extends BaseController
 
     @Autowired
     private IDormStudentService dormStudentService;
+
+    @Autowired
+    private IDormitoryAllocationService dormitoryAllocationService;
 
     /**
      * 查询床位管理列表
@@ -160,5 +167,110 @@ public class DormBedController extends BaseController
         System.out.println("=== 床位检查完成 ===");
         
         return result;
+    }
+
+    /**
+     * 自动分配宿舍
+     */
+    @PreAuthorize("@ss.hasPermi('dormitory:bed:edit')")
+    @Log(title = "自动分配宿舍", businessType = BusinessType.UPDATE)
+    @PostMapping("/autoAllocate/{studentId}")
+    public AjaxResult autoAllocate(@PathVariable("studentId") Long studentId)
+    {
+        // 根据学生ID获取学生信息
+        DormStudent student = dormStudentService.selectDormStudentByStuId(studentId);
+        if (student == null) {
+            return AjaxResult.error("学生不存在");
+        }
+        
+        // 调用自动分配服务
+        AllocationResult result = dormitoryAllocationService.autoAllocateDormitory(student);
+        
+        if (result.isSuccess()) {
+            return AjaxResult.success(result.getMessage());
+        } else {
+            return AjaxResult.error(result.getMessage());
+        }
+    }
+
+    /**
+     * 批量自动分配宿舍
+     */
+    @PreAuthorize("@ss.hasPermi('dormitory:bed:edit')")
+    @Log(title = "批量自动分配宿舍", businessType = BusinessType.UPDATE)
+    @PostMapping("/batchAutoAllocate")
+    public AjaxResult batchAutoAllocate(@RequestBody List<Long> studentIds)
+    {
+        if (studentIds == null || studentIds.isEmpty()) {
+            return AjaxResult.error("学生ID列表不能为空");
+        }
+        
+        // 根据学生ID列表获取学生信息
+        List<DormStudent> students = new ArrayList<>();
+        for (Long studentId : studentIds) {
+            DormStudent student = dormStudentService.selectDormStudentByStuId(studentId);
+            if (student != null) {
+                students.add(student);
+            }
+        }
+        
+        if (students.isEmpty()) {
+            return AjaxResult.error("没有找到有效的学生信息");
+        }
+        
+        // 调用批量自动分配服务
+        List<AllocationResult> results = dormitoryAllocationService.batchAutoAllocateDormitory(students);
+        
+        // 统计分配结果
+        long successCount = results.stream().mapToLong(r -> r.isSuccess() ? 1 : 0).sum();
+        long failureCount = results.size() - successCount;
+        
+        AjaxResult ajaxResult = AjaxResult.success();
+        ajaxResult.put("successCount", successCount);
+        ajaxResult.put("failureCount", failureCount);
+        ajaxResult.put("results", results);
+        ajaxResult.put("message", String.format("分配完成：成功 %d 个，失败 %d 个", successCount, failureCount));
+        
+        return ajaxResult;
+    }
+
+    /**
+     * 获取所有未分配宿舍的学生并批量自动分配
+     */
+    @PreAuthorize("@ss.hasPermi('dormitory:bed:edit')")
+    @Log(title = "批量自动分配所有未分配学生", businessType = BusinessType.UPDATE)
+    @PostMapping("/autoAllocateAll")
+    public AjaxResult autoAllocateAll()
+    {
+        // 查询所有未分配宿舍的学生
+        DormStudent queryStudent = new DormStudent();
+        // 这里需要查询dorId为null的学生，但由于查询条件限制，我们先获取所有学生再过滤
+        List<DormStudent> allStudents = dormStudentService.selectDormStudentList(queryStudent);
+        
+        // 过滤出未分配宿舍的学生
+        List<DormStudent> unallocatedStudents = allStudents.stream()
+                .filter(student -> student.getDorId() == null)
+                .collect(Collectors.toList());
+        
+        if (unallocatedStudents.isEmpty()) {
+            return AjaxResult.success("所有学生都已分配宿舍");
+        }
+        
+        // 调用批量自动分配服务
+        List<AllocationResult> results = dormitoryAllocationService.batchAutoAllocateDormitory(unallocatedStudents);
+        
+        // 统计分配结果
+        long successCount = results.stream().mapToLong(r -> r.isSuccess() ? 1 : 0).sum();
+        long failureCount = results.size() - successCount;
+        
+        AjaxResult ajaxResult = AjaxResult.success();
+        ajaxResult.put("totalStudents", unallocatedStudents.size());
+        ajaxResult.put("successCount", successCount);
+        ajaxResult.put("failureCount", failureCount);
+        ajaxResult.put("results", results);
+        ajaxResult.put("message", String.format("批量分配完成：共 %d 个学生，成功 %d 个，失败 %d 个", 
+                unallocatedStudents.size(), successCount, failureCount));
+        
+        return ajaxResult;
     }
 }

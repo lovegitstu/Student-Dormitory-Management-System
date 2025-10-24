@@ -167,6 +167,7 @@ export const dynamicRoutes = [
     path: '/dormitory',
     component: Layout,
     alwaysShow: true,
+    permissions: ['*:*:*'],
     meta: { title: '宿舍管理', icon: 'dormitory' },
     redirect: 'noRedirect',
     children: [
@@ -205,6 +206,12 @@ export const dynamicRoutes = [
         name: 'Contest',
         component: () => import('@/views/dormitory/contest/index'),
         meta: { title: '宿舍评分', icon: 'star' }
+      },
+      {
+        path: 'bills',
+        name: 'Bills',
+        component: () => import('@/views/dormitory/bills/index'),
+        meta: { title: '水电费管理', icon: 'cost' }
       }
     ]
   },
@@ -256,18 +263,6 @@ export const dynamicRoutes = [
         name: 'Student',
         component: () => import('@/views/dormitory/student/index'),
         meta: { title: '学生信息', icon: 'student' }
-      }
-    ]
-  },
-  {
-    path: '/bills',
-    component: Layout,
-    children: [
-      {
-        path: 'index',
-        name: 'Bills',
-        component: () => import('@/views/dormitory/bills/index'),
-        meta: { title: '水电费管理', icon: 'cost' }
       }
     ]
   }

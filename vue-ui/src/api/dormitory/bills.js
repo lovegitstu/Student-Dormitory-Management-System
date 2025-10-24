@@ -75,8 +75,15 @@ export function rechargeMyDorm(amount) {
   return request({
     url: '/dormitory/bills/rechargeMyDorm',
     method: 'post',
-    data: {
-      amount: amount
-    }
+    data: { amount: amount }
+  })
+}
+
+// 计算阶梯水电费
+export function calculateTieredBill(data) {
+  return request({
+    url: '/dormitory/bills/calculateTiered',
+    method: 'post',
+    data: data
   })
 }

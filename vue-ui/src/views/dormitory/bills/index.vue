@@ -94,6 +94,10 @@
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
           v-hasPermi="['dormitory:bills:export']" v-hasRole="['subadmin', 'admin', 'man']">导出</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button type="info" plain icon="el-icon-s-data" size="mini" @click="openTieredCalculator"
+          v-hasPermi="['dormitory:bills:query']">阶梯计费计算器</el-button>
+      </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -396,12 +400,164 @@
         <el-button type="primary" @click="closePaymentDialog">关 闭</el-button>
       </div>
     </el-dialog>
+
+    <!-- 阶梯计费计算器弹窗 -->
+    <el-dialog title="阶梯水电费计算器" :visible.sync="tieredCalculatorVisible" width="900px" append-to-body>
+      <el-form :model="tieredCalculatorForm" :rules="tieredCalculatorRules" ref="tieredCalculatorForm" label-width="120px">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="宿舍ID" prop="dormId">
+              <el-input 
+                v-model="tieredCalculatorForm.dormId" 
+                placeholder="请输入宿舍ID" 
+                type="number"
+                @blur="validateDormId"
+                :loading="dormIdValidating">
+                <template slot="suffix">
+                  <i v-if="dormIdValidating" class="el-icon-loading"></i>
+                  <i v-else-if="dormIdValid === false" class="el-icon-circle-close" style="color: #F56C6C;"></i>
+                </template>
+              </el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="分摊方式" prop="splitMethod">
+              <el-select v-model="tieredCalculatorForm.splitMethod" placeholder="请选择分摊方式" style="width: 100%">
+                <el-option label="按入住人数分摊" value="BY_OCCUPANTS"></el-option>
+                <el-option label="按入住天数分摊" value="BY_RESIDENCE_DAYS"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="用电量(度)" prop="electricityUsage">
+              <el-input v-model="tieredCalculatorForm.electricityUsage" placeholder="请输入用电量" type="number" step="0.01"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="用水量(吨)" prop="waterUsage">
+              <el-input v-model="tieredCalculatorForm.waterUsage" placeholder="请输入用水量" type="number" step="0.01"></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="计费开始日期" prop="billingStartDate">
+              <el-date-picker
+                v-model="tieredCalculatorForm.billingStartDate"
+                type="date"
+                placeholder="选择开始日期"
+                style="width: 100%">
+              </el-date-picker>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="计费结束日期" prop="billingEndDate">
+              <el-date-picker
+                v-model="tieredCalculatorForm.billingEndDate"
+                type="date"
+                placeholder="选择结束日期"
+                style="width: 100%">
+              </el-date-picker>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        
+        <el-form-item>
+          <el-button type="primary" @click="performTieredCalculation" :loading="tieredCalculatorLoading">
+            <i class="el-icon-s-data"></i> 计算阶梯费用
+          </el-button>
+          <el-button @click="resetTieredCalculatorForm">重置表单</el-button>
+        </el-form-item>
+      </el-form>
+
+      <!-- 计算结果展示 -->
+      <div v-if="calculationResult" style="margin-top: 20px;">
+        <el-divider content-position="left">计算结果</el-divider>
+        
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <div class="result-item">
+              <div class="result-label">电费总额</div>
+              <div class="result-value electricity">¥{{ calculationResult.electricityCost }}</div>
+            </div>
+          </el-col>
+          <el-col :span="8">
+            <div class="result-item">
+              <div class="result-label">水费总额</div>
+              <div class="result-value water">¥{{ calculationResult.waterCost }}</div>
+            </div>
+          </el-col>
+          <el-col :span="8">
+            <div class="result-item">
+              <div class="result-label">总费用</div>
+              <div class="result-value total">¥{{ calculationResult.totalCost }}</div>
+            </div>
+          </el-col>
+        </el-row>
+        
+        <el-row :gutter="20" style="margin-top: 15px;">
+          <el-col :span="12">
+            <div class="result-item">
+              <div class="result-label">每人应付电费</div>
+              <div class="result-value">¥{{ calculationResult.electricityCostPerPerson }}</div>
+            </div>
+          </el-col>
+          <el-col :span="12">
+            <div class="result-item">
+              <div class="result-label">每人应付水费</div>
+              <div class="result-value">¥{{ calculationResult.waterCostPerPerson }}</div>
+            </div>
+          </el-col>
+        </el-row>
+        
+        <el-row :gutter="20" style="margin-top: 15px;">
+          <el-col :span="24">
+            <div class="result-item">
+              <div class="result-label">每人应付总费用</div>
+              <div class="result-value total-per-person">¥{{ calculationResult.totalCostPerPerson }}</div>
+            </div>
+          </el-col>
+        </el-row>
+      </div>
+
+      <!-- 阶梯费率说明 -->
+      <div style="margin-top: 20px;">
+        <el-divider content-position="left">阶梯费率说明</el-divider>
+        
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <h4>电费阶梯费率</h4>
+            <el-table :data="electricityTiers" size="small" border>
+              <el-table-column prop="tier" label="阶梯" width="80"></el-table-column>
+              <el-table-column prop="range" label="用量范围(度)"></el-table-column>
+              <el-table-column prop="rate" label="费率(元/度)"></el-table-column>
+            </el-table>
+          </el-col>
+          <el-col :span="12">
+            <h4>水费阶梯费率</h4>
+            <el-table :data="waterTiers" size="small" border>
+              <el-table-column prop="tier" label="阶梯" width="80"></el-table-column>
+              <el-table-column prop="range" label="用量范围(吨)"></el-table-column>
+              <el-table-column prop="rate" label="费率(元/吨)"></el-table-column>
+            </el-table>
+          </el-col>
+        </el-row>
+      </div>
+      
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="tieredCalculatorVisible = false">关 闭</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { listBills, getBills, delBills, addBills, updateBills, rechargeBills, payBill, getMyDormBalance, rechargeMyDorm } from "@/api/dormitory/bills";
-import { listDorm } from "@/api/dormitory/dorm";
+import { listBills, getBills, delBills, addBills, updateBills, rechargeBills, payBill, getMyDormBalance, rechargeMyDorm, calculateTieredBill } from "@/api/dormitory/bills";
+import { listDorm, getDorm } from "@/api/dormitory/dorm";
 import { listFloor } from "@/api/dormitory/floor";
 import { getInfo } from "@/api/login"
 
@@ -468,6 +624,59 @@ export default {
       // 快速充值金额选项
       quickAmounts: [50, 100, 200, 500, 1000],
       currentRechargeRow: null,
+      // 阶梯计算弹窗相关数据
+      tieredCalculatorVisible: false,
+      tieredCalculatorForm: {
+        dormId: '',
+        splitMethod: 'BY_OCCUPANTS',
+        electricityUsage: '',
+        waterUsage: '',
+        billingStartDate: '',
+        billingEndDate: ''
+      },
+      tieredCalculatorResult: null,
+      tieredCalculatorLoading: false,
+      // 计算结果
+      calculationResult: null,
+      // 电费阶梯费率
+      electricityTiers: [
+        { tier: '第一阶梯', range: '0-150度', rate: '0.56' },
+        { tier: '第二阶梯', range: '151-400度', rate: '0.61' },
+        { tier: '第三阶梯', range: '400度以上', rate: '0.86' }
+      ],
+      // 水费阶梯费率
+      waterTiers: [
+        { tier: '第一阶梯', range: '0-15吨', rate: '2.80' },
+        { tier: '第二阶梯', range: '16-25吨', rate: '4.20' },
+        { tier: '第三阶梯', range: '25吨以上', rate: '6.00' }
+      ],
+      // 宿舍ID验证相关
+      dormIdValidating: false,
+      dormIdValid: null,
+      dormInfo: null,
+      // 阶梯计算表单验证规则
+      tieredCalculatorRules: {
+        dormId: [
+          { required: true, message: "宿舍ID不能为空", trigger: "blur" }
+        ],
+        splitMethod: [
+          { required: true, message: "请选择分摊方式", trigger: "change" }
+        ],
+        electricityUsage: [
+          { required: true, message: "用电量不能为空", trigger: "blur" },
+          { pattern: /^\d+(\.\d+)?$/, message: "请输入有效的数字", trigger: "blur" }
+        ],
+        waterUsage: [
+          { required: true, message: "用水量不能为空", trigger: "blur" },
+          { pattern: /^\d+(\.\d+)?$/, message: "请输入有效的数字", trigger: "blur" }
+        ],
+        billingStartDate: [
+          { required: true, message: "计费开始日期不能为空", trigger: "change" }
+        ],
+        billingEndDate: [
+          { required: true, message: "计费结束日期不能为空", trigger: "change" }
+        ]
+      },
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -1094,6 +1303,212 @@ export default {
         console.error("充值请求失败:", error);
         this.$modal.msgError("充值请求失败");
       });
+    },
+    /** 打开阶梯计费计算器 */
+    async openTieredCalculator() {
+      console.log('打开阶梯计算器弹窗')
+      this.tieredCalculatorVisible = true
+      
+      // 重置表单数据
+      this.tieredCalculatorForm = {
+        dormId: '',
+        splitMethod: 'BY_OCCUPANTS',
+        electricityUsage: '',
+        waterUsage: '',
+        billingStartDate: '',
+        billingEndDate: ''
+      }
+      this.tieredCalculatorResult = null
+      this.calculationResult = null  // 同时清空calculationResult
+      // 重置宿舍验证状态
+      this.dormIdValid = null
+      this.dormInfo = null
+      this.dormIdValidating = false
+
+      // 自动获取当前用户宿舍信息并填充
+      try {
+        const response = await getMyDormBalance()
+        if (response.code === 200 && response.data) {
+          const dormData = response.data
+          
+          // 自动填充宿舍ID（使用真实的宿舍ID）
+          this.tieredCalculatorForm.dormId = dormData.dormId || ''
+          
+          // 自动填充最新用量数据
+          if (dormData.electricUsage) {
+            this.tieredCalculatorForm.electricityUsage = dormData.electricUsage
+          }
+          if (dormData.waterUsage) {
+            this.tieredCalculatorForm.waterUsage = dormData.waterUsage
+          }
+          
+          // 设置默认的计费日期（当前月份）
+          const now = new Date()
+          const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+          const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+          
+          this.tieredCalculatorForm.billingStartDate = this.formatDate(firstDay)
+          this.tieredCalculatorForm.billingEndDate = this.formatDate(lastDay)
+          
+          // 设置宿舍验证状态为有效
+          this.dormIdValid = true
+          this.dormInfo = {
+            dormName: dormData.dormName,
+            floorName: dormData.floorName
+          }
+          
+          console.log('自动填充宿舍信息成功:', {
+            dormId: this.tieredCalculatorForm.dormId,
+            electricityUsage: this.tieredCalculatorForm.electricityUsage,
+            waterUsage: this.tieredCalculatorForm.waterUsage
+          })
+          
+          this.$modal.msgSuccess('已自动填充您的宿舍信息')
+        }
+      } catch (error) {
+        console.warn('获取宿舍信息失败，将使用空白表单:', error)
+        // 如果获取失败，继续使用空白表单，不影响用户手动填写
+      }
+    },
+    /** 关闭阶梯计算器弹窗 */
+    closeTieredCalculator() {
+      this.tieredCalculatorVisible = false
+      this.tieredCalculatorResult = null
+    },
+    /** 执行阶梯计算 */
+    async performTieredCalculation() {
+      // 表单验证
+      if (!this.tieredCalculatorForm.dormId) {
+        this.$modal.msgError('请输入宿舍编号')
+        return
+      }
+      if (!this.tieredCalculatorForm.electricityUsage) {
+        this.$modal.msgError('请输入电费用量')
+        return
+      }
+      if (!this.tieredCalculatorForm.waterUsage) {
+        this.$modal.msgError('请输入水费用量')
+        return
+      }
+      if (!this.tieredCalculatorForm.billingStartDate) {
+        this.$modal.msgError('请选择计费开始日期')
+        return
+      }
+      if (!this.tieredCalculatorForm.billingEndDate) {
+        this.$modal.msgError('请选择计费结束日期')
+        return
+      }
+
+      this.tieredCalculatorLoading = true
+      try {
+        const response = await calculateTieredBill({
+          dormId: this.tieredCalculatorForm.dormId,
+          splitMethod: this.tieredCalculatorForm.splitMethod,
+          electricityUsage: parseFloat(this.tieredCalculatorForm.electricityUsage),
+          waterUsage: parseFloat(this.tieredCalculatorForm.waterUsage),
+          billingStartDate: this.tieredCalculatorForm.billingStartDate,
+          billingEndDate: this.tieredCalculatorForm.billingEndDate
+        })
+        
+        if (response.code === 200) {
+          this.tieredCalculatorResult = response.data
+          
+          // 处理计算结果，计算每人费用
+          const result = response.data
+          const splits = result.splits || []
+          
+          // 计算每人平均费用
+          let totalCostPerPerson = 0
+          let electricityCostPerPerson = 0
+          let waterCostPerPerson = 0
+          
+          if (splits.length > 0) {
+            // 从splits中获取每人应付总费用（所有人的费用应该相同）
+            totalCostPerPerson = splits[0].amount || 0
+            
+            // 按比例计算每人电费和水费
+            const totalCost = result.totalCost || 0
+            const electricityCost = result.electricityCost || 0
+            const waterCost = result.waterCost || 0
+            
+            if (totalCost > 0) {
+              electricityCostPerPerson = (electricityCost * totalCostPerPerson / totalCost).toFixed(2)
+              waterCostPerPerson = (waterCost * totalCostPerPerson / totalCost).toFixed(2)
+            }
+          }
+          
+          // 设置计算结果供模板使用
+          this.calculationResult = {
+            ...result,
+            electricityCostPerPerson: electricityCostPerPerson,
+            waterCostPerPerson: waterCostPerPerson,
+            totalCostPerPerson: totalCostPerPerson.toFixed(2)
+          }
+          
+          this.$modal.msgSuccess('计算完成')
+        } else {
+          this.$modal.msgError(response.msg || '计算失败')
+        }
+      } catch (error) {
+        console.error('阶梯计算失败:', error)
+        this.$modal.msgError('计算失败，请稍后重试')
+      } finally {
+        this.tieredCalculatorLoading = false
+      }
+    },
+    // 重置阶梯计算表单
+    resetTieredCalculatorForm() {
+      this.tieredCalculatorForm = {
+        dormId: '',
+        splitMethod: 'BY_OCCUPANTS',
+        electricityUsage: '',
+        waterUsage: '',
+        billingStartDate: '',
+        billingEndDate: ''
+      }
+      this.tieredCalculatorResult = null
+      if (this.$refs.tieredCalculatorForm) {
+        this.$refs.tieredCalculatorForm.resetFields()
+      }
+    },
+    // 验证宿舍ID
+    async validateDormId() {
+      const dormId = this.tieredCalculatorForm.dormId
+      if (!dormId) {
+        this.dormIdValid = null
+        this.dormInfo = null
+        return
+      }
+
+      this.dormIdValidating = true
+      this.dormIdValid = null
+      this.dormInfo = null
+
+      try {
+        const response = await getDorm(dormId)
+        if (response.code === 200 && response.data) {
+          this.dormIdValid = true
+          this.dormInfo = response.data
+        } else {
+          this.dormIdValid = false
+          this.dormInfo = null
+        }
+      } catch (error) {
+        console.error('验证宿舍ID失败:', error)
+        this.dormIdValid = false
+        this.dormInfo = null
+      } finally {
+        this.dormIdValidating = false
+      }
+    },
+    // 格式化日期
+    formatDate(date) {
+      if (!date) return '';
+      const d = new Date(date);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     }
   }
 };

@@ -4,6 +4,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import com.springboot.common.annotation.Excel;
 import com.springboot.common.core.domain.BaseEntity;
+import java.util.Date;
 
 /**
  * 学生信息对象 dorm_student
@@ -63,6 +64,14 @@ public class DormStudent extends BaseEntity
 
     /** 删除标志 */
     private String delFlag;
+
+    /** 年级 */
+    @Excel(name = "年级")
+    private String stuGrade;
+
+    /** 入学日期 */
+    @Excel(name = "入学日期")
+    private Date stuEnrollmentDate;
 
     private DormFloor dormFloor;
     private DormDormitory dormDormitory;
@@ -132,6 +141,19 @@ public class DormStudent extends BaseEntity
     {
         return stuSex;
     }
+
+    /**
+     * 获取学生性别（兼容性方法）
+     * @return 学生性别
+     */
+    public String getStuGender() {
+        return this.stuSex;
+    }
+
+    public void setStuGender(String stuGender) {
+        this.stuSex = stuGender;
+    }
+
     public void setStuPhoto(String stuPhoto) 
     {
         this.stuPhoto = stuPhoto;
@@ -159,6 +181,23 @@ public class DormStudent extends BaseEntity
     {
         return stuMajor;
     }
+
+    public void setStuGrade(String stuGrade) {
+        this.stuGrade = stuGrade;
+    }
+
+    public String getStuGrade() {
+        return stuGrade;
+    }
+
+    public void setStuEnrollmentDate(Date stuEnrollmentDate) {
+        this.stuEnrollmentDate = stuEnrollmentDate;
+    }
+
+    public Date getStuEnrollmentDate() {
+        return stuEnrollmentDate;
+    }
+
     public void setfId(Long fId) 
     {
         this.fId = fId;
@@ -233,6 +272,8 @@ public class DormStudent extends BaseEntity
             .append("stuPhoto", getStuPhoto())
             .append("stuPhone", getStuPhone())
             .append("stuMajor", getStuMajor())
+            .append("stuGrade", getStuGrade())
+            .append("stuEnrollmentDate", getStuEnrollmentDate())
             .append("fId", getfId())
             .append("dorId", getDorId())
             .append("stuStatus", getStuStatus())

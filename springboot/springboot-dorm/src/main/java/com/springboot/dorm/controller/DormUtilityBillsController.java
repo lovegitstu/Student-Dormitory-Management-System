@@ -2,6 +2,8 @@ package com.springboot.dorm.controller;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,7 @@ import com.springboot.dorm.service.IDormUtilityBillsService;
 import com.springboot.dorm.service.IDormStudentService;
 import com.springboot.common.utils.poi.ExcelUtil;
 import com.springboot.common.core.page.TableDataInfo;
+import com.springboot.dorm.algorithm.UtilityBillCalculator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -567,6 +570,7 @@ public class DormUtilityBillsController extends BaseController
         // 创建返回数据
         java.util.Map<String, Object> data = new java.util.HashMap<>();
         data.put("ubId", latestBill.getUbId());
+        data.put("dormId", dormStudent.getDorId()); // 添加宿舍ID
         data.put("dormName", dormStudent.getDormDormitory() != null ? dormStudent.getDormDormitory().getDorName() : "未知寝室");
         data.put("floorName", dormStudent.getDormFloor() != null ? dormStudent.getDormFloor().getfName() : "未知楼层");
         data.put("balance", latestBill.getUbBalance());
@@ -582,5 +586,41 @@ public class DormUtilityBillsController extends BaseController
         logger.info("=== 获取当前用户寝室余额接口调用结束 ===");
         
         return AjaxResult.success("获取寝室余额成功", data);
+    }
+    
+    /**
+     * 计算阶梯水电费
+     */
+    @PreAuthorize("@ss.hasPermi('dormitory:bills:query')")
+    @PostMapping("/calculateTiered")
+    public AjaxResult calculateTieredBill(@RequestBody java.util.Map<String, Object> requestBody)
+    {
+        logger.info("=== 计算阶梯水电费接口调用开始 ===");
+        
+        try {
+            Long dormId = Long.valueOf(requestBody.get("dormId").toString());
+            BigDecimal electricityUsage = new BigDecimal(requestBody.get("electricityUsage").toString());
+            BigDecimal waterUsage = new BigDecimal(requestBody.get("waterUsage").toString());
+            LocalDate billingStartDate = LocalDate.parse(requestBody.get("billingStartDate").toString());
+            LocalDate billingEndDate = LocalDate.parse(requestBody.get("billingEndDate").toString());
+            String splitMethodStr = requestBody.get("splitMethod").toString();
+            
+            UtilityBillCalculator.SplitMethod splitMethod = 
+                UtilityBillCalculator.SplitMethod.valueOf(splitMethodStr.toUpperCase());
+            
+            UtilityBillCalculator.BillCalculationResult result = 
+                dormUtilityBillsService.calculateTieredBill(
+                    dormId, electricityUsage, waterUsage, 
+                    billingStartDate, billingEndDate, splitMethod);
+            
+            logger.info("阶梯计费计算成功: 宿舍ID={}, 总费用={}", dormId, result.getTotalCost());
+            logger.info("=== 计算阶梯水电费接口调用结束 ===");
+            
+            return AjaxResult.success("计算成功", result);
+            
+        } catch (Exception e) {
+            logger.error("计算阶梯水电费失败: {}", e.getMessage(), e);
+            return AjaxResult.error("计算失败: " + e.getMessage());
+        }
     }
 }

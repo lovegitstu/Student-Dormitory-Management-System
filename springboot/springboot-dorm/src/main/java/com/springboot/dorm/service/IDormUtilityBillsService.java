@@ -1,7 +1,10 @@
 package com.springboot.dorm.service;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import com.springboot.dorm.domain.DormUtilityBills;
+import com.springboot.dorm.algorithm.UtilityBillCalculator;
 
 /**
  * 水电费管理Service接口
@@ -58,4 +61,20 @@ public interface IDormUtilityBillsService
      * @return 结果
      */
     public int deleteDormUtilityBillsByUbId(Integer ubId);
+    
+    /**
+     * 计算阶梯水电费
+     * 
+     * @param dormId 宿舍ID
+     * @param electricityUsage 用电量
+     * @param waterUsage 用水量
+     * @param billingStartDate 计费开始日期
+     * @param billingEndDate 计费结束日期
+     * @param splitMethod 分摊方式
+     * @return 计算结果
+     */
+    public UtilityBillCalculator.BillCalculationResult calculateTieredBill(
+        Long dormId, BigDecimal electricityUsage, BigDecimal waterUsage, 
+        LocalDate billingStartDate, LocalDate billingEndDate, 
+        UtilityBillCalculator.SplitMethod splitMethod);
 }
