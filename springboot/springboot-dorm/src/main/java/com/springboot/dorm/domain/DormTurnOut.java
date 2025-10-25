@@ -37,7 +37,7 @@ public class DormTurnOut extends BaseEntity
     @Excel(name = "审批状态")
     private String approvalStatus;
 
-    /** 状态 */
+    /** 状态 (0=正常 1=停用 2=已完成-学生已返校) */
     @Excel(name = "状态")
     private String status;
 

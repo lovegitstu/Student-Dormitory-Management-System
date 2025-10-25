@@ -93,6 +93,7 @@ public class SysPermissionService
                     logger.info("处理角色: ID={}, Key={}, Name={}", role.getRoleId(), role.getRoleKey(), role.getRoleName());
                     Set<String> rolePerms = menuService.selectMenuPermsByRoleId(role.getRoleId());
                     logger.info("角色 {} 的权限: {}", role.getRoleKey(), rolePerms);
+                    logger.info("角色 {} 权限中是否包含dormitory:out:confirmReturn: {}", role.getRoleKey(), rolePerms.contains("dormitory:out:confirmReturn"));
                     role.setPermissions(rolePerms);
                     perms.addAll(rolePerms);
                 }
@@ -102,11 +103,13 @@ public class SysPermissionService
                 logger.info("用户没有角色，直接通过用户ID查询权限");
                 Set<String> userPerms = menuService.selectMenuPermsByUserId(user.getUserId());
                 logger.info("用户直接权限: {}", userPerms);
+                logger.info("用户直接权限中是否包含dormitory:out:confirmReturn: {}", userPerms.contains("dormitory:out:confirmReturn"));
                 perms.addAll(userPerms);
             }
         }
         
         logger.info("最终菜单权限集合: {}", perms);
+        logger.info("权限集合中是否包含dormitory:out:confirmReturn: {}", perms.contains("dormitory:out:confirmReturn"));
         logger.info("权限集合中是否包含dormitory:student:query: {}", perms.contains("dormitory:student:query"));
         logger.info("=== 获取用户菜单权限结束 ===");
         return perms;

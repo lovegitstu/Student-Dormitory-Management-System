@@ -127,4 +127,19 @@ public class DormTurnOutController extends BaseController
         updateEntity.setApprovalStatus(dormTurnOut.getApprovalStatus());
         return toAjax(dormTurnOutService.updateDormTurnOut(updateEntity));
     }
+
+    /**
+     * 确认学生返校
+     */
+    @PreAuthorize("@ss.hasPermi('dormitory:out:confirmReturn')")
+    @Log(title = "学生返校确认", businessType = BusinessType.UPDATE)
+    @PutMapping("/confirmReturn")
+    public AjaxResult confirmReturn(@RequestBody DormTurnOut dormTurnOut)
+    {
+        // 更新审批状态为已完成（学生已返校）
+        DormTurnOut updateEntity = new DormTurnOut();
+        updateEntity.setId(dormTurnOut.getId());
+        updateEntity.setApprovalStatus("3"); // 3表示已完成（学生已返校）
+        return toAjax(dormTurnOutService.updateDormTurnOut(updateEntity));
+    }
 }

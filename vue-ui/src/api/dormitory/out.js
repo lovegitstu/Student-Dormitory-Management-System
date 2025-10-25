@@ -51,3 +51,12 @@ export function approveOut(data) {
     data: data
   })
 }
+
+// 确认学生返校
+export function confirmReturn(data) {
+  return request({
+    url: '/dormitory/out/confirmReturn',
+    method: 'put',
+    data: data
+  })
+}

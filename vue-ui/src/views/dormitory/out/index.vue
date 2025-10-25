@@ -82,7 +82,7 @@
           <dict-tag :options="dict.type.approval_status" :value="scope.row.approvalStatus"/>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="350">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="400">
         <template slot-scope="scope">
           <el-button v-if="scope.row.approvalStatus === '0'" 
             size="small" type="success" icon="el-icon-edit" @click="handleUpdate(scope.row)"
@@ -103,6 +103,13 @@
             icon="el-icon-close" 
             @click="handleApprove(scope.row, '2')"
             v-hasPermi="['dormitory:out:approve']">拒绝</el-button>
+          <el-button 
+            v-if="scope.row.approvalStatus === '1'" 
+            size="small" 
+            type="info" 
+            icon="el-icon-user" 
+            @click="handleConfirmReturn(scope.row)"
+            v-hasPermi="['dormitory:out:confirmReturn']">返校确认</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -157,7 +164,7 @@
 </template>
 
 <script>
-import { listOut, getOut, delOut, addOut, updateOut, approveOut } from "@/api/dormitory/out";
+import { listOut, getOut, delOut, addOut, updateOut, approveOut, confirmReturn } from "@/api/dormitory/out";
 import { listDorm } from "@/api/dormitory/dorm";
 import { listFloor } from "@/api/dormitory/floor";
 import { getInfo } from "@/api/login"
@@ -393,6 +400,21 @@ export default {
     /** 调用审批接口 */
     approveOut(data) {
       return approveOut(data);
+    },
+    /** 返校确认操作 */
+    handleConfirmReturn(row) {
+      console.log('返校确认按钮点击 - 行数据:', row);
+      console.log('当前用户角色:', this.currentRole);
+      
+      this.$modal.confirm('是否确认该学生已返校？确认后该离校申请将标记为已完成。').then(() => {
+        const data = {
+          id: row.id
+        };
+        return confirmReturn(data);
+      }).then(() => {
+        this.getList();
+        this.$modal.msgSuccess('返校确认成功');
+      }).catch(() => {});
     },
     /** 导出按钮操作 */
     handleExport () {

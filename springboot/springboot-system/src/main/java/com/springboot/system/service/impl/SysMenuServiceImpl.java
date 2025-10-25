@@ -8,6 +8,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.springboot.common.constant.Constants;
@@ -33,6 +35,8 @@ import com.springboot.system.service.ISysMenuService;
 @Service
 public class SysMenuServiceImpl implements ISysMenuService
 {
+    private static final Logger logger = LoggerFactory.getLogger(SysMenuServiceImpl.class);
+    
     public static final String PREMISSION_STRING = "perms[\"{0}\"]";
 
     @Autowired
@@ -88,15 +92,27 @@ public class SysMenuServiceImpl implements ISysMenuService
     @Override
     public Set<String> selectMenuPermsByUserId(Long userId)
     {
+        logger.info("=== 查询用户权限开始 ===");
+        logger.info("用户ID: {}", userId);
+        
         List<String> perms = menuMapper.selectMenuPermsByUserId(userId);
+        logger.info("从数据库查询到的权限列表: {}", perms);
+        
         Set<String> permsSet = new HashSet<>();
         for (String perm : perms)
         {
             if (StringUtils.isNotEmpty(perm))
             {
-                permsSet.addAll(Arrays.asList(perm.trim().split(",")));
+                logger.info("处理权限字符串: {}", perm);
+                String[] permArray = perm.trim().split(",");
+                logger.info("分割后的权限数组: {}", Arrays.toString(permArray));
+                permsSet.addAll(Arrays.asList(permArray));
             }
         }
+        
+        logger.info("最终权限集合: {}", permsSet);
+        logger.info("权限集合中是否包含dormitory:out:confirmReturn: {}", permsSet.contains("dormitory:out:confirmReturn"));
+        logger.info("=== 查询用户权限结束 ===");
         return permsSet;
     }
 
@@ -109,15 +125,27 @@ public class SysMenuServiceImpl implements ISysMenuService
     @Override
     public Set<String> selectMenuPermsByRoleId(Long roleId)
     {
+        logger.info("=== 查询角色权限开始 ===");
+        logger.info("角色ID: {}", roleId);
+        
         List<String> perms = menuMapper.selectMenuPermsByRoleId(roleId);
+        logger.info("从数据库查询到的权限列表: {}", perms);
+        
         Set<String> permsSet = new HashSet<>();
         for (String perm : perms)
         {
             if (StringUtils.isNotEmpty(perm))
             {
-                permsSet.addAll(Arrays.asList(perm.trim().split(",")));
+                logger.info("处理权限字符串: {}", perm);
+                String[] permArray = perm.trim().split(",");
+                logger.info("分割后的权限数组: {}", Arrays.toString(permArray));
+                permsSet.addAll(Arrays.asList(permArray));
             }
         }
+        
+        logger.info("最终权限集合: {}", permsSet);
+        logger.info("权限集合中是否包含dormitory:out:confirmReturn: {}", permsSet.contains("dormitory:out:confirmReturn"));
+        logger.info("=== 查询角色权限结束 ===");
         return permsSet;
     }
 
