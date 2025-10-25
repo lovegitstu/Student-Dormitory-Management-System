@@ -1,6 +1,7 @@
 package com.springboot.dorm.controller;
 
 import java.util.List;
+import java.util.Date;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,9 +18,11 @@ import com.springboot.common.core.controller.BaseController;
 import com.springboot.common.core.domain.AjaxResult;
 import com.springboot.common.enums.BusinessType;
 import com.springboot.dorm.domain.DormVisit;
+import com.springboot.dorm.domain.DormStudent;
 import com.springboot.dorm.service.IDormVisitService;
-import com.springboot.common.utils.poi.ExcelUtil;
+import com.springboot.dorm.service.IDormStudentService;
 import com.springboot.common.core.page.TableDataInfo;
+import com.springboot.common.utils.poi.ExcelUtil;
 
 /**
  * 来访人员登记Controller
@@ -34,6 +37,9 @@ public class DormVisitController extends BaseController
     @Autowired
     private IDormVisitService dormVisitService;
 
+    @Autowired
+    private IDormStudentService dormStudentService;
+
     /**
      * 查询来访人员登记列表
      */
@@ -41,6 +47,13 @@ public class DormVisitController extends BaseController
     @GetMapping("/list")
     public TableDataInfo list(DormVisit dormVisit)
     {
+        // 根据当前用户ID获取学生信息，只显示自己申请的访客记录
+        Long userId = getUserId();
+        DormStudent student = dormStudentService.selectDormStudentByUserId(userId);
+        if (student != null) {
+            dormVisit.setStuId(student.getStuId());
+        }
+        
         startPage();
         List<DormVisit> list = dormVisitService.selectDormVisitList(dormVisit);
         return getDataTable(list);
@@ -77,6 +90,16 @@ public class DormVisitController extends BaseController
     @PostMapping
     public AjaxResult add(@RequestBody DormVisit dormVisit)
     {
+        // 根据当前用户ID获取学生信息，自动设置stuId
+        Long userId = getUserId();
+        DormStudent student = dormStudentService.selectDormStudentByUserId(userId);
+        if (student != null) {
+            dormVisit.setStuId(student.getStuId());
+        }
+        
+        // 设置默认审批状态为待审批
+        dormVisit.setApprovalStatus("0");
+        
         return toAjax(dormVisitService.insertDormVisit(dormVisit));
     }
 
@@ -100,5 +123,24 @@ public class DormVisitController extends BaseController
     public AjaxResult remove(@PathVariable Long[] visIds)
     {
         return toAjax(dormVisitService.deleteDormVisitByVisIds(visIds));
+    }
+
+    /**
+     * 审批访客登记申请
+     */
+    @PreAuthorize("@ss.hasPermi('dormitory:visit:approve')")
+    @Log(title = "访客登记审批", businessType = BusinessType.UPDATE)
+    @PutMapping("/approve")
+    public AjaxResult approve(@RequestBody DormVisit dormVisit)
+    {
+        // 只更新审批相关字段
+        DormVisit updateEntity = new DormVisit();
+        updateEntity.setVisId(dormVisit.getVisId());
+        updateEntity.setApprovalStatus(dormVisit.getApprovalStatus());
+        updateEntity.setApprovalOpinion(dormVisit.getApprovalOpinion());
+        updateEntity.setApprovalTime(new Date());
+        updateEntity.setApprovalBy(getUsername());
+        
+        return toAjax(dormVisitService.updateDormVisit(updateEntity));
     }
 }

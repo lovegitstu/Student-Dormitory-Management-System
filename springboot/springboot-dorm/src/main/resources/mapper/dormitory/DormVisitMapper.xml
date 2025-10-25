@@ -14,30 +14,55 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="fId"    column="f_id"    />
         <result property="dorId"    column="dor_id"    />
         <result property="visDatetime"    column="vis_datetime"    />
+        <result property="stuId"    column="stu_id"    />
+        <result property="approvalStatus"    column="approval_status"    />
+        <result property="approvalOpinion"    column="approval_opinion"    />
+        <result property="approvalTime"    column="approval_time"    />
+        <result property="approvalBy"    column="approval_by"    />
+        <result property="stuName"    column="stu_name"    />
         <result property="createBy"    column="create_by"    />
         <result property="createTime"    column="create_time"    />
         <result property="updateBy"    column="update_by"    />
         <result property="updateTime"    column="update_time"    />
-        <association property="dormFloor" javaType="dormFloor" resultMap="com.springboot.dorm.mapper.DormFloorMapper.DormFloorResult"></association>
-        <association property="dormDormitory" javaType="dormDormitory" resultMap="com.springboot.dorm.mapper.DormDormitoryMapper.DormDormitoryResult"></association>
+        <association property="dormFloor" javaType="DormFloor" columnPrefix="dormFloor.">
+            <result property="fId" column="fId"/>
+            <result property="fName" column="fName"/>
+            <result property="fType" column="fType"/>
+            <result property="fNumber" column="fNumber"/>
+        </association>
+        <association property="dormDormitory" javaType="DormDormitory" columnPrefix="dormDormitory.">
+            <result property="dorId" column="dorId"/>
+            <result property="dorName" column="dorName"/>
+            <result property="dorType" column="dorType"/>
+        </association>
     </resultMap>
 
     <sql id="selectDormVisitVo">
-        select dv.*,dd.*,df.* from dorm_visit dv
-        left join  dorm_floor df on df.f_id = dv.f_id
-        left join dorm_dormitory dd on dd.dor_id = dv.dor_id
+        select vis_id, vis_name, vis_phone, vis_type, vis_interviewee, vis_cause, f_id, dor_id, vis_datetime, 
+               stu_id, approval_status, approval_opinion, approval_time, approval_by, stu_name,
+               create_by, create_time, update_by, update_time from dorm_visit
     </sql>
 
     <select id="selectDormVisitList" parameterType="DormVisit" resultMap="DormVisitResult">
-        <include refid="selectDormVisitVo"/>
+        select v.vis_id, v.vis_name, v.vis_phone, v.vis_type, v.vis_interviewee, v.vis_cause, v.f_id, v.dor_id, v.vis_datetime, 
+               v.stu_id, v.approval_status, v.approval_opinion, v.approval_time, v.approval_by, v.stu_name,
+               v.create_by, v.create_time, v.update_by, v.update_time,
+               f.f_id as "dormFloor.fId", f.f_name as "dormFloor.fName", f.f_type as "dormFloor.fType", f.f_number as "dormFloor.fNumber",
+               d.dor_id as "dormDormitory.dorId", d.dor_name as "dormDormitory.dorName", d.dor_type as "dormDormitory.dorType"
+        from dorm_visit v
+        left join dorm_floor f on v.f_id = f.f_id
+        left join dorm_dormitory d on v.dor_id = d.dor_id
         <where>  
-            <if test="visName != null  and visName != ''"> and dv.vis_name like concat('%', #{visName}, '%')</if>
-            <if test="visPhone != null  and visPhone != ''"> and dv.vis_phone = #{visPhone}</if>
-            <if test="visType != null "> and dv.vis_type = #{visType}</if>
-            <if test="visInterviewee != null  and visInterviewee != ''"> and dv.vis_interviewee = #{visInterviewee}</if>
-            <if test="fId != null "> and dv.f_id = #{fId}</if>
-            <if test="dorId != null "> and dv.dor_id = #{dorId}</if>
-            <if test="visDatetime != null "> and dv.vis_datetime = #{visDatetime}</if>
+            <if test="visName != null  and visName != ''"> and v.vis_name like concat('%', #{visName}, '%')</if>
+            <if test="visPhone != null  and visPhone != ''"> and v.vis_phone = #{visPhone}</if>
+            <if test="visType != null "> and v.vis_type = #{visType}</if>
+            <if test="visInterviewee != null  and visInterviewee != ''"> and v.vis_interviewee = #{visInterviewee}</if>
+            <if test="fId != null "> and v.f_id = #{fId}</if>
+            <if test="dorId != null "> and v.dor_id = #{dorId}</if>
+            <if test="visDatetime != null "> and v.vis_datetime = #{visDatetime}</if>
+            <if test="stuId != null "> and v.stu_id = #{stuId}</if>
+            <if test="approvalStatus != null and approvalStatus != ''"> and v.approval_status = #{approvalStatus}</if>
+            <if test="stuName != null and stuName != ''"> and v.stu_name like concat('%', #{stuName}, '%')</if>
         </where>
     </select>
     
@@ -57,6 +82,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="fId != null">f_id,</if>
             <if test="dorId != null">dor_id,</if>
             <if test="visDatetime != null">vis_datetime,</if>
+            <if test="stuId != null">stu_id,</if>
+            <if test="approvalStatus != null">approval_status,</if>
+            <if test="approvalOpinion != null">approval_opinion,</if>
+            <if test="approvalTime != null">approval_time,</if>
+            <if test="approvalBy != null">approval_by,</if>
+            <if test="stuName != null">stu_name,</if>
             <if test="createBy != null">create_by,</if>
             <if test="createTime != null">create_time,</if>
             <if test="updateBy != null">update_by,</if>
@@ -71,6 +102,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="fId != null">#{fId},</if>
             <if test="dorId != null">#{dorId},</if>
             <if test="visDatetime != null">#{visDatetime},</if>
+            <if test="stuId != null">#{stuId},</if>
+            <if test="approvalStatus != null">#{approvalStatus},</if>
+            <if test="approvalOpinion != null">#{approvalOpinion},</if>
+            <if test="approvalTime != null">#{approvalTime},</if>
+            <if test="approvalBy != null">#{approvalBy},</if>
+            <if test="stuName != null">#{stuName},</if>
             <if test="createBy != null">#{createBy},</if>
             <if test="createTime != null">#{createTime},</if>
             <if test="updateBy != null">#{updateBy},</if>
@@ -89,6 +126,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="fId != null">f_id = #{fId},</if>
             <if test="dorId != null">dor_id = #{dorId},</if>
             <if test="visDatetime != null">vis_datetime = #{visDatetime},</if>
+            <if test="stuId != null">stu_id = #{stuId},</if>
+            <if test="approvalStatus != null">approval_status = #{approvalStatus},</if>
+            <if test="approvalOpinion != null">approval_opinion = #{approvalOpinion},</if>
+            <if test="approvalTime != null">approval_time = #{approvalTime},</if>
+            <if test="approvalBy != null">approval_by = #{approvalBy},</if>
+            <if test="stuName != null">stu_name = #{stuName},</if>
             <if test="createBy != null">create_by = #{createBy},</if>
             <if test="createTime != null">create_time = #{createTime},</if>
             <if test="updateBy != null">update_by = #{updateBy},</if>

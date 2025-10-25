@@ -42,3 +42,12 @@ export function delVisit(visId) {
     method: 'delete'
   })
 }
+
+// 审批访客登记申请
+export function approveVisit(data) {
+  return request({
+    url: '/dormitory/visit/approve',
+    method: 'put',
+    data: data
+  })
+}

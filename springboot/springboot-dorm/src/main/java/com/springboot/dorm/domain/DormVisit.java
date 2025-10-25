@@ -53,6 +53,31 @@ public class DormVisit extends BaseEntity
     @Excel(name = "来访时间", width = 30, dateFormat = "yyyy-MM-dd")
     private Date visDatetime;
 
+    /** 申请学生ID */
+    @Excel(name = "申请学生ID")
+    private Long stuId;
+
+    /** 审批状态 (0=待审批 1=已通过 2=已拒绝) */
+    @Excel(name = "审批状态")
+    private String approvalStatus;
+
+    /** 审批意见 */
+    @Excel(name = "审批意见")
+    private String approvalOpinion;
+
+    /** 审批时间 */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Excel(name = "审批时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
+    private Date approvalTime;
+
+    /** 审批人 */
+    @Excel(name = "审批人")
+    private String approvalBy;
+
+    /** 学生姓名 */
+    @Excel(name = "学生姓名")
+    private String stuName;
+
     private DormFloor dormFloor;
 
     private  DormDormitory dormDormitory;
@@ -155,6 +180,66 @@ public class DormVisit extends BaseEntity
         return visDatetime;
     }
 
+    public void setStuId(Long stuId) 
+    {
+        this.stuId = stuId;
+    }
+
+    public Long getStuId() 
+    {
+        return stuId;
+    }
+
+    public void setApprovalStatus(String approvalStatus) 
+    {
+        this.approvalStatus = approvalStatus;
+    }
+
+    public String getApprovalStatus() 
+    {
+        return approvalStatus;
+    }
+
+    public void setApprovalOpinion(String approvalOpinion) 
+    {
+        this.approvalOpinion = approvalOpinion;
+    }
+
+    public String getApprovalOpinion() 
+    {
+        return approvalOpinion;
+    }
+
+    public void setApprovalTime(Date approvalTime) 
+    {
+        this.approvalTime = approvalTime;
+    }
+
+    public Date getApprovalTime() 
+    {
+        return approvalTime;
+    }
+
+    public void setApprovalBy(String approvalBy) 
+    {
+        this.approvalBy = approvalBy;
+    }
+
+    public String getApprovalBy() 
+    {
+        return approvalBy;
+    }
+
+    public void setStuName(String stuName) 
+    {
+        this.stuName = stuName;
+    }
+
+    public String getStuName() 
+    {
+        return stuName;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
@@ -167,6 +252,12 @@ public class DormVisit extends BaseEntity
             .append("fId", getfId())
             .append("dorId", getDorId())
             .append("visDatetime", getVisDatetime())
+            .append("stuId", getStuId())
+            .append("approvalStatus", getApprovalStatus())
+            .append("approvalOpinion", getApprovalOpinion())
+            .append("approvalTime", getApprovalTime())
+            .append("approvalBy", getApprovalBy())
+            .append("stuName", getStuName())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())
             .append("updateBy", getUpdateBy())

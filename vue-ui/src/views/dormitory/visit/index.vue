@@ -25,10 +25,12 @@
           <el-option v-for="item in dormOptions" :key="item.dorId" :label="item.dorName" :value="item.dorId"></el-option>
         </el-select>
       </el-form-item>
-      <el-form-item label="" prop="visDatetime">
-        <el-date-picker clearable v-model="queryParams.visDatetime" type="date" value-format="yyyy-MM-dd"
-          placeholder="请选择来访时间">
-        </el-date-picker>
+      <el-form-item label="" prop="approvalStatus">
+        <el-select v-model="queryParams.approvalStatus" placeholder="请选择审批状态" clearable>
+          <el-option label="待审批" value="0" />
+          <el-option label="已通过" value="1" />
+          <el-option label="已拒绝" value="2" />
+        </el-select>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -71,13 +73,25 @@
       <el-table-column label="来访事由" align="center" prop="visCause" width="180" />
       <el-table-column label="宿舍楼" align="center" prop="dormFloor.fName" />
       <el-table-column label="来访宿舍" align="center" prop="dormDormitory.dorName" />
-      <el-table-column label="来访时间" align="center" prop="visDatetime" width="180">
+      <el-table-column label="审批状态" align="center" prop="approvalStatus" width="100">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.visDatetime, '{y}-{m}-{d}') }}</span>
+          <el-tag v-if="scope.row.approvalStatus === '0'" type="warning">待审批</el-tag>
+          <el-tag v-else-if="scope.row.approvalStatus === '1'" type="success">已通过</el-tag>
+          <el-tag v-else-if="scope.row.approvalStatus === '2'" type="danger">已拒绝</el-tag>
+          <el-tag v-else type="info">未知</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="250">
+      <el-table-column label="审批时间" align="center" prop="approvalTime" width="180">
         <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.approvalTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="300">
+        <template slot-scope="scope">
+          <el-button v-if="scope.row.approvalStatus === '0'" size="small" type="primary" icon="el-icon-check" 
+            @click="handleApprove(scope.row, '1')" v-hasPermi="['dormitory:visit:approve']">通过</el-button>
+          <el-button v-if="scope.row.approvalStatus === '0'" size="small" type="danger" icon="el-icon-close" 
+            @click="handleApprove(scope.row, '2')" v-hasPermi="['dormitory:visit:approve']">拒绝</el-button>
           <el-button size="small" type="success" icon="el-icon-edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['dormitory:visit:edit']">修改</el-button>
           <el-button size="small" type="danger" icon="el-icon-delete" @click="handleDelete(scope.row)"
@@ -105,18 +119,18 @@
           </el-select>
         </el-form-item>
         <el-form-item label="宿舍楼" prop="fId">
-          <el-select v-model="form.fId" placeholder="请选择宿舍楼" @change="parentSelect('addEditSelect')">
+          <el-select v-model="form.fId" placeholder="请选择宿舍楼" @change="parentSelect('addEditSelect')" disabled>
             <el-option v-for="item in floorOptions" :key="item.fId" :label="item.fName" :value="item.fId"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="来访宿舍" prop="dorId">
-          <el-select v-model="form.dorId" placeholder="请选择来访宿舍" @change="childSelect('addEditSelect')">
+          <el-select v-model="form.dorId" placeholder="请选择来访宿舍" @change="childSelect('addEditSelect')" disabled>
             <el-option v-for="item in dormOptions" :key="item.dorId" :label="item.dorName"
               :value="item.dorId"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="被访人" prop="visInterviewee">
-          <el-input v-model="form.visInterviewee" placeholder="请输入被访人" />
+          <el-input v-model="form.visInterviewee" placeholder="请输入被访人" disabled />
         </el-form-item>
         <el-form-item label="来访时间" prop="visDatetime">
           <el-date-picker clearable v-model="form.visDatetime" type="date" value-format="yyyy-MM-dd"
@@ -136,9 +150,10 @@
 </template>
 
 <script>
-import { listVisit, getVisit, delVisit, addVisit, updateVisit } from "@/api/dormitory/visit";
+import { listVisit, getVisit, delVisit, addVisit, updateVisit, approveVisit } from "@/api/dormitory/visit";
 import { listFloor } from "@/api/dormitory/floor";
 import { listDorm } from "@/api/dormitory/dorm";
+import { getStudentByUserId } from "@/api/dormitory/student";
 
 export default {
   name: "Visit",
@@ -176,6 +191,7 @@ export default {
         fId: null,
         dorId: null,
         visDatetime: null,
+        approvalStatus: null,
       },
       //选择宿舍楼参数
       selectParams: {
@@ -183,6 +199,8 @@ export default {
       },
       // 表单参数
       form: {},
+      // 当前用户的学生信息
+      currentStudentInfo: null,
       // 表单校验
       rules: {
       }
@@ -191,8 +209,23 @@ export default {
   created () {
     this.getList();
     this.getAllFloorList();
+    this.getCurrentUserStudentInfo();
   },
   methods: {
+    // 获取当前用户的学生信息
+    getCurrentUserStudentInfo() {
+      const currentUserId = this.$store.state.user.userId;
+      if (currentUserId) {
+        getStudentByUserId(currentUserId).then(response => {
+          if (response.data) {
+            this.currentStudentInfo = response.data;
+            console.log('当前用户学生信息:', this.currentStudentInfo);
+          }
+        }).catch(error => {
+          console.error('获取当前用户学生信息失败:', error);
+        });
+      }
+    },
     //父类选择器
     parentSelect: function (param) {
       if (param === 'querySelect') {
@@ -277,6 +310,26 @@ export default {
     /** 新增按钮操作 */
     handleAdd () {
       this.reset();
+      
+      // 自动填充当前用户的宿舍信息
+      if (this.currentStudentInfo) {
+        this.form.fId = this.currentStudentInfo.fId;
+        this.form.dorId = this.currentStudentInfo.dorId;
+        
+        // 自动获取宿舍列表
+        if (this.currentStudentInfo.fId) {
+          this.selectParams.fId = this.currentStudentInfo.fId;
+          listDorm(this.selectParams).then(response => {
+            this.dormOptions = response.rows;
+          });
+        }
+        
+        // 自动填充被访人信息（当前用户姓名）
+        if (this.currentStudentInfo.stuName) {
+          this.form.visInterviewee = this.currentStudentInfo.stuName;
+        }
+      }
+      
       this.open = true;
       this.title = "添加来访人员登记";
     },
@@ -294,26 +347,56 @@ export default {
         this.dormOptions = response.rows;
       })
     },
-    /** 提交按钮 */
-    submitForm () {
-      this.$refs["form"].validate(valid => {
-        if (valid) {
-          if (this.form.visId != null) {
-            updateVisit(this.form).then(response => {
-              this.$modal.msgSuccess("修改成功");
-              this.open = false;
-              this.getList();
-            });
-          } else {
-            addVisit(this.form).then(response => {
-              this.$modal.msgSuccess("新增成功");
-              this.open = false;
-              this.getList();
-            });
-          }
-        }
+    /** 审批按钮操作 */
+    handleApprove (row, status) {
+      const statusText = status === '1' ? '通过' : '拒绝';
+      this.$modal.prompt(`请输入${statusText}意见`, "审批确认", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        inputPlaceholder: `请输入${statusText}意见`,
+        inputType: 'textarea'
+      }).then(({ value }) => {
+        const approvalData = {
+          visId: row.visId,
+          approvalStatus: status,
+          approvalOpinion: value || `${statusText}访客申请`
+        };
+        
+        // 调用审批API
+         approveVisit(approvalData).then(response => {
+           if (response.code === 200) {
+             this.$modal.msgSuccess(`${statusText}成功`);
+             this.getList();
+           } else {
+             this.$modal.msgError(response.msg || `${statusText}失败`);
+           }
+         }).catch(() => {
+           this.$modal.msgError(`${statusText}失败`);
+         });
+      }).catch(() => {
+        this.$modal.msgInfo("已取消审批");
       });
     },
+     /** 提交按钮 */
+     submitForm () {
+        this.$refs["form"].validate(valid => {
+          if (valid) {
+            if (this.form.visId != null) {
+              updateVisit(this.form).then(response => {
+                this.$modal.msgSuccess("修改成功");
+                this.open = false;
+                this.getList();
+              });
+            } else {
+              addVisit(this.form).then(response => {
+                this.$modal.msgSuccess("新增成功");
+                this.open = false;
+                this.getList();
+              });
+            }
+          }
+        });
+      },
     /** 删除按钮操作 */
     handleDelete (row) {
       const visIds = row.visId || this.ids;
