@@ -66,24 +66,24 @@
       <el-table-column label="详细说明" align="center" prop="cause" />
       <el-table-column label="审批状态" align="center" prop="opinion">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.approval_status" :value="scope.row.opinion" />
+          <dict-tag :options="dict.type.approval_status" :value="String(scope.row.opinion === 0 || scope.row.opinion === '0' || scope.row.opinion === null || scope.row.opinion === '' ? '0' : scope.row.opinion)" />
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="350">
         <template slot-scope="scope">
           <!-- 审批按钮 - 仅在待审批状态显示 -->
-          <el-button v-if="scope.row.opinion === '0' || scope.row.opinion === null || scope.row.opinion === ''" size="small" type="success" icon="el-icon-check" 
-            @click="handleApprove(scope.row, '1')" v-hasPermi="['dormitory:come:approve']" 
+          <el-button v-if="scope.row.opinion === '0' || scope.row.opinion === null || scope.row.opinion === ''" size="small" type="success" icon="el-icon-check"
+            @click="handleApprove(scope.row, '1')" v-hasPermi="['dormitory:come:approve']"
             v-hasRole="['admin', 'subadmin', 'man']">通过</el-button>
-          <el-button v-if="scope.row.opinion === '0' || scope.row.opinion === null || scope.row.opinion === ''" size="small" type="danger" icon="el-icon-close" 
-            @click="handleApprove(scope.row, '2')" v-hasPermi="['dormitory:come:approve']" 
+          <el-button v-if="scope.row.opinion === '0' || scope.row.opinion === null || scope.row.opinion === ''" size="small" type="danger" icon="el-icon-close"
+            @click="handleApprove(scope.row, '2')" v-hasPermi="['dormitory:come:approve']"
             v-hasRole="['admin', 'subadmin', 'man']">拒绝</el-button>
-          <!-- 调试信息 -->
-          <span v-if="scope.row.opinion === '0' || scope.row.opinion === null || scope.row.opinion === ''" style="font-size: 12px; color: #999;">
-            [调试] opinion: {{scope.row.opinion}}, 当前角色: {{currentRole}}
-          </span>
-          
-          <el-button v-if="scope.row.opinion === '0' || scope.row.opinion === null || scope.row.opinion === ''" 
+<!--          &lt;!&ndash; 调试信息 &ndash;&gt;-->
+<!--          <span v-if="scope.row.opinion === '0' || scope.row.opinion === null || scope.row.opinion === ''" style="font-size: 12px; color: #999;">-->
+<!--            [调试] opinion: {{scope.row.opinion}}, 当前角色: {{currentRole}}-->
+<!--          </span>-->
+
+          <el-button v-if="scope.row.opinion === '0' || scope.row.opinion === null || scope.row.opinion === ''"
             size="small" type="success" icon="el-icon-edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['dormitory:come:edit']" v-hasRole="['admin', 'subadmin', 'student']">修改</el-button>
           <el-button size="small" type="danger" icon="el-icon-delete" @click="handleDelete(scope.row)"
@@ -258,7 +258,7 @@ export default {
           this.comeList = response.rows;
           this.total = response.total;
           this.loading = false;
-          
+
           // 添加调试信息
           console.log('回校申请列表数据:', response.rows);
           console.log('当前用户角色:', this.currentRole);
@@ -319,7 +319,7 @@ export default {
       const id = row.id || this.ids
       getCome(id).then(response => {
         this.form = response.data;
-        
+
         // 如果有宿舍楼信息，设置宿舍楼选项并选中
         if (this.form.fId) {
           this.selectParams.fId = this.form.fId;
@@ -327,7 +327,7 @@ export default {
             this.dormOptions = dormResponse.rows;
           });
         }
-        
+
         if (this.currentRole == 'teacher' || this.currentRole == 'admin' || this.currentRole == 'sysadmin') {
           this.disabled = true
           this.open = true;
@@ -407,7 +407,7 @@ export default {
       console.log('审批状态:', status);
       console.log('当前用户角色:', this.currentRole);
       console.log('用户权限:', this.$store.getters.permissions);
-      
+
       const statusText = status === '1' ? '通过' : '拒绝';
       this.$modal.confirm(`是否确认${statusText}该回校申请？`).then(() => {
         return this.approveCome(row.id, status);

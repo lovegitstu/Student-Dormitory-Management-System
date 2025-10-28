@@ -81,11 +81,11 @@
           <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; padding: 6px 0;">
             <el-button size="small" type="success" icon="el-icon-check" @click="handleApprove(scope.row, 1)"
               v-hasPermi="['dormitory:exchange:approve']" v-hasRole="['admin', 'subadmin', 'man']"
-              v-if="scope.row.opinion === 0"
+              v-if="scope.row.opinion === 0 && !isStudentRole"
               style="margin: 0; min-width: 75px;">通过</el-button>
             <el-button size="small" type="danger" icon="el-icon-close" @click="handleApprove(scope.row, 2)"
               v-hasPermi="['dormitory:exchange:approve']" v-hasRole="['admin', 'subadmin', 'man']"
-              v-if="scope.row.opinion === 0"
+              v-if="scope.row.opinion === 0 && !isStudentRole"
               style="margin: 0; min-width: 75px;">拒绝</el-button>
             <el-button size="small" type="warning" icon="el-icon-s-check" @click="handleUpdate(scope.row)"
               v-hasPermi="['dormitory:exchange:edit']" v-hasRole="['admin', 'subadmin', 'man']"
@@ -213,6 +213,8 @@ export default {
       title: "",
       //当前用户角色
       currentRole: this.$store.state.user.roles[0],
+      // 是否为学生角色
+      isStudentRole: false,
       // 是否显示弹出层
       open: false,
       // 查询参数
@@ -275,6 +277,10 @@ export default {
     console.log("是否有admin角色:", roles.includes('admin'));
     console.log("是否有subadmin角色:", roles.includes('subadmin'));
     console.log("是否有man角色:", roles.includes('man'));
+    
+    // 初始化isStudentRole变量，只有管理员和宿管可以看到审核按钮
+    this.isStudentRole = roles.includes('student');
+    console.log("是否为学生角色:", this.isStudentRole);
     
     this.getList();
     this.getAllFloorList();

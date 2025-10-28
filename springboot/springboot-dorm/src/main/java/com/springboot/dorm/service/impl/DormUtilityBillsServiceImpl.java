@@ -87,8 +87,12 @@ public class DormUtilityBillsServiceImpl implements IDormUtilityBillsService
         // 使用阶梯计费重新计算水电费
         calculateTieredBills(dormUtilityBills);
         
-        // 自动缴费逻辑：检查余额是否充足
-        checkAndAutoPayment(dormUtilityBills);
+        // 自动缴费逻辑：检查余额是否充足，允许通过业务层控制跳过
+        if (!Boolean.TRUE.equals(dormUtilityBills.getSkipAutoPayment())) {
+            checkAndAutoPayment(dormUtilityBills);
+        } else {
+            System.out.println("跳过自动缴费逻辑，保持当前余额与缴费状态不变");
+        }
         
         return dormUtilityBillsMapper.updateDormUtilityBills(dormUtilityBills);
     }

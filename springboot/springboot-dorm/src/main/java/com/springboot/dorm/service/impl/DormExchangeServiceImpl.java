@@ -142,9 +142,10 @@ public class DormExchangeServiceImpl implements IDormExchangeService
                                  ", 申请记录中的原床位ID: " + exchangeDetail.getOriginalBedId() + 
                                  ", 新床位ID: " + exchangeDetail.getBedId());
                 
+                DormBed targetBed = null;
                 // 1. 先检查新床位是否可用
                 if (exchangeDetail.getBedId() != null) {
-                    DormBed targetBed = dormBedService.selectDormBedByBedId(exchangeDetail.getBedId());
+                    targetBed = dormBedService.selectDormBedByBedId(exchangeDetail.getBedId());
                     if (targetBed != null && "1".equals(targetBed.getBedStatus())) {
                         System.out.println("错误：目标床位 " + exchangeDetail.getBedId() + " 已被占用，无法分配");
                         return result;
@@ -224,6 +225,16 @@ public class DormExchangeServiceImpl implements IDormExchangeService
                     DormBed newBed = new DormBed();
                     newBed.setBedId(exchangeDetail.getBedId());
                     newBed.setStuId(exchangeDetail.getStuId());
+                    if (targetBed != null && targetBed.getDorId() != null) {
+                        newBed.setDorId(targetBed.getDorId());
+                    } else if (exchangeDetail.getDorId() != null) {
+                        newBed.setDorId(exchangeDetail.getDorId());
+                    } else {
+                        DormBed latestBedInfo = dormBedService.selectDormBedByBedId(exchangeDetail.getBedId());
+                        if (latestBedInfo != null) {
+                            newBed.setDorId(latestBedInfo.getDorId());
+                        }
+                    }
                     // 注意：不设置stuName，因为数据库表中没有该字段，学生姓名通过关联查询获取
                     newBed.setBedStatus("1"); // 设置为已占用
                     newBed.setUpdateTime(DateUtils.getNowDate());

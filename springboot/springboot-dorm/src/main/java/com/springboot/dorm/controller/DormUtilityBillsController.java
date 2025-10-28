@@ -261,6 +261,7 @@ public class DormUtilityBillsController extends BaseController
         logger.info("充值前缴费状态: {}", dormUtilityBills.getUbPaymentStatus());
         
         dormUtilityBills.setUbBalance(newBalance);
+    dormUtilityBills.setSkipAutoPayment(Boolean.TRUE);
         
         logger.info("=== 开始更新数据库 ===");
         // 更新数据库（会触发自动扣费逻辑）
@@ -380,6 +381,7 @@ public class DormUtilityBillsController extends BaseController
         logger.info("充值前缴费状态: {}", dormUtilityBills.getUbPaymentStatus());
         
         dormUtilityBills.setUbBalance(newBalance);
+    dormUtilityBills.setSkipAutoPayment(Boolean.TRUE);
         
         logger.info("=== 开始更新数据库 ===");
         // 更新数据库（会触发自动扣费逻辑）
@@ -488,6 +490,7 @@ public class DormUtilityBillsController extends BaseController
         java.math.BigDecimal newBalance = currentBalance.subtract(totalCost);
         dormUtilityBills.setUbBalance(newBalance);
         dormUtilityBills.setUbPaymentStatus(1); // 设置为已缴费
+    dormUtilityBills.setSkipAutoPayment(Boolean.TRUE);
         
         // 更新数据库
         int result = dormUtilityBillsService.updateDormUtilityBills(dormUtilityBills);

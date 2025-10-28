@@ -75,6 +75,9 @@ public class DormUtilityBills extends BaseEntity
     @Excel(name = "是否核验")
     private Integer ubIsnotarize;
 
+    /** 是否跳过自动缴费逻辑（仅用于业务层控制，不参与持久化） */
+    private transient Boolean skipAutoPayment;
+
     public Integer getUbIsnotarize() {
         return ubIsnotarize;
     }
@@ -283,6 +286,14 @@ public class DormUtilityBills extends BaseEntity
     public BigDecimal getUbWaterCost() 
     {
         return ubWater;
+    }
+
+    public Boolean getSkipAutoPayment() {
+        return skipAutoPayment;
+    }
+
+    public void setSkipAutoPayment(Boolean skipAutoPayment) {
+        this.skipAutoPayment = skipAutoPayment;
     }
 
     @Override
