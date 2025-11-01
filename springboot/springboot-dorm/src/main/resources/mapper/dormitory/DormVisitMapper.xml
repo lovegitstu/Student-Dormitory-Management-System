@@ -158,12 +158,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <foreach item="floorId" collection="arg0" open="(" separator="," close=")">
             #{floorId}
         </foreach>
-        and status = #{arg1}
+        and approval_status = #{arg1}
     </select>
 
     <!-- 根据学生ID统计来访登记数量 -->
     <select id="countByStudentId" parameterType="java.lang.Long" resultType="java.lang.Integer">
-        select count(*) from dorm_visit where vis_interviewee = #{studentId}
+        select count(*) from dorm_visit where stu_id = #{studentId}
     </select>
 
     <!-- 根据楼层ID统计本月处理的来访登记数 -->
@@ -188,7 +188,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             vis_datetime as visitTime,
             create_time as createTime
         from dorm_visit 
-        where vis_interviewee = #{studentId}
+        where stu_id = #{studentId}
         order by create_time desc
         limit 5
     </select>

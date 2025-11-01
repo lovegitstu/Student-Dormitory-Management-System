@@ -322,8 +322,8 @@
       <div style="text-align: center;">
         <h4>请选择充值金额</h4>
         <div style="margin: 20px 0;">
-          <p><strong>宿舍：</strong>{{ currentRechargeRow ? currentRechargeRow.dormDormitory.dorName : '' }}</p>
-          <p><strong>当前欠费：</strong>¥{{ currentRechargeRow ? currentRechargeRow.ubTotalCost : 0 }}</p>
+          <p><strong>宿舍：</strong>{{ currentRechargeRow && currentRechargeRow.dormDormitory ? currentRechargeRow.dormDormitory.dorName : '' }}</p>
+          <p><strong>当前欠费：</strong>¥{{ currentRechargeRow && currentRechargeRow.ubTotalCost ? currentRechargeRow.ubTotalCost : 0 }}</p>
         </div>
         
         <!-- 快捷金额选择 -->
@@ -617,6 +617,11 @@ export default {
       balanceInfo: null,
       // 余额加载状态
       balanceLoading: false,
+      currentUserContact: {
+        phone: '',
+        nickName: ''
+      },
+      userProfileLoaded: false,
       // 是否显示快速充值弹窗
       quickRechargeDialogVisible: false,
       // 快速充值金额
@@ -718,6 +723,7 @@ export default {
     // 如果是学生角色，加载寝室余额信息
     console.log("开始加载余额信息");
     this.loadBalanceInfo();
+    this.fetchCurrentUserProfile();
     console.log("=== 组件初始化完成 ===");
   },
   methods: {
@@ -772,6 +778,28 @@ export default {
         console.error("错误详情:", error.response);
         this.$modal.msgError("充值请求失败");
       });
+    },
+    fetchCurrentUserProfile() {
+      if (this.userProfileLoaded) {
+        return Promise.resolve();
+      }
+      return getInfo().then(response => {
+        const user = response.user || {};
+        this.currentUserContact.nickName = user.nickName || user.userName || '';
+        this.currentUserContact.phone = user.phonenumber || '';
+      }).catch(error => {
+        console.error('获取用户信息失败:', error);
+      }).finally(() => {
+        this.userProfileLoaded = true;
+      });
+    },
+    applyContactPhoneToForm() {
+      if (!this.form) {
+        return;
+      }
+      if (!this.form.ubPhone && this.currentUserContact.phone) {
+        this.$set(this.form, 'ubPhone', this.currentUserContact.phone);
+      }
     },
 
     //父类选择器
@@ -965,8 +993,12 @@ export default {
     /** 新增按钮操作 */
     handleAdd () {
       this.reset();
-      this.open = true;
-      this.title = "添加水电费信息";
+      const openDialog = () => {
+        this.applyContactPhoneToForm();
+        this.open = true;
+        this.title = "添加水电费信息";
+      };
+      this.fetchCurrentUserProfile().finally(openDialog);
     },
     /** 修改按钮操作 */
     handleUpdate (row) {
@@ -1045,14 +1077,40 @@ export default {
     },
     /** 充值按钮操作 */
     handleRecharge (row) {
-      // 显示充值金额选择弹窗
-      this.currentRechargeRow = row;
+      if (!row) {
+        this.$modal.msgWarning('无法识别要充值的账单');
+        return;
+      }
+
+      let targetRow = row;
+
+      if (!targetRow.dormDormitory && Array.isArray(this.billsList)) {
+        const matchFromList = this.billsList.find(item => item.ubId === row.ubId);
+        if (matchFromList) {
+          targetRow = matchFromList;
+        }
+      }
+
+      if (!targetRow.dormDormitory && this.form && this.form.ubId === row.ubId) {
+        targetRow = this.form;
+      }
+
+      if (!targetRow) {
+        this.$modal.msgWarning('未找到账单详情，无法充值');
+        return;
+      }
+
+      this.currentRechargeRow = { ...targetRow };
       this.rechargeDialogVisible = true;
       this.rechargeAmount = '';
     },
     /** 从详情页面充值 */
     handleRechargeFromDetails () {
-      this.handleRecharge({ ubId: this.form.ubId });
+      if (!this.form || !this.form.ubId) {
+        this.$modal.msgWarning('无法获取当前账单信息');
+        return;
+      }
+      this.handleRecharge({ ...this.form });
     },
     /** 学生缴费按钮操作 */
     handlePayment(row) {
@@ -1571,13 +1629,14 @@ export default {
 .balance-actions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  min-width: 120px;
-  align-items: stretch;
+  gap: 12px;
+  min-width: 160px;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .balance-actions .el-button {
-  width: 100%;
+  width: 160px;
 }
 
 .no-balance-info {
@@ -1605,14 +1664,13 @@ export default {
   }
   
   .balance-actions {
-    flex-direction: row;
-    justify-content: center;
-    gap: 15px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
   }
   
   .balance-actions .el-button {
-    flex: 1;
-    max-width: 150px;
+    width: 100%;
   }
 }
 </style>

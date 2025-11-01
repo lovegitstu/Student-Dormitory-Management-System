@@ -2,6 +2,7 @@ package com.springboot.dorm.controller;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,6 +27,7 @@ import com.springboot.dorm.service.IDormitoryAllocationService;
 import com.springboot.dorm.algorithm.DormitoryAllocationAlgorithm.AllocationResult;
 import com.springboot.common.utils.poi.ExcelUtil;
 import com.springboot.common.core.page.TableDataInfo;
+import com.springboot.common.utils.SecurityUtils;
 
 /**
  * 床位管理Controller
@@ -55,6 +57,12 @@ public class DormBedController extends BaseController
     {
         startPage();
         List<DormBed> list = dormBedService.selectDormBedList(dormBed);
+        if (isCurrentUserStudent() && list != null) {
+            Long currentStuId = getCurrentStudentId();
+            for (DormBed bed : list) {
+                sanitizeBedForStudent(bed, currentStuId);
+            }
+        }
         return getDataTable(list);
     }
 
@@ -67,6 +75,12 @@ public class DormBedController extends BaseController
     public void export(HttpServletResponse response, DormBed dormBed)
     {
         List<DormBed> list = dormBedService.selectDormBedList(dormBed);
+        if (isCurrentUserStudent() && list != null) {
+            Long currentStuId = getCurrentStudentId();
+            for (DormBed bed : list) {
+                sanitizeBedForStudent(bed, currentStuId);
+            }
+        }
         ExcelUtil<DormBed> util = new ExcelUtil<DormBed>(DormBed.class);
         util.exportExcel(response, list, "床位管理数据");
     }
@@ -78,7 +92,11 @@ public class DormBedController extends BaseController
     @GetMapping(value = "/{bedId}")
     public AjaxResult getInfo(@PathVariable("bedId") Long bedId)
     {
-        return success(dormBedService.selectDormBedByBedId(bedId));
+        DormBed bed = dormBedService.selectDormBedByBedId(bedId);
+        if (bed != null && isCurrentUserStudent()) {
+            sanitizeBedForStudent(bed, getCurrentStudentId());
+        }
+        return success(bed);
     }
 
     /**
@@ -272,5 +290,42 @@ public class DormBedController extends BaseController
                 unallocatedStudents.size(), successCount, failureCount));
         
         return ajaxResult;
+    }
+
+    private boolean isCurrentUserStudent()
+    {
+        try {
+            return SecurityUtils.getLoginUser().getUser().getRoles().stream()
+                .anyMatch(role -> "student".equals(role.getRoleName()));
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    private DormStudent getCurrentStudent()
+    {
+        try {
+            return dormStudentService.selectDormStudentByUserId(SecurityUtils.getUserId());
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private Long getCurrentStudentId()
+    {
+        DormStudent current = getCurrentStudent();
+        return current != null ? current.getStuId() : null;
+    }
+
+    private void sanitizeBedForStudent(DormBed bed, Long currentStuId)
+    {
+        if (bed == null) {
+            return;
+        }
+        if (currentStuId == null || !Objects.equals(currentStuId, bed.getStuId())) {
+            bed.setStuId(null);
+            bed.setStuName(null);
+            bed.setDormStudent(null);
+        }
     }
 }

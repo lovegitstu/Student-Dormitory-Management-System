@@ -21,8 +21,10 @@ import com.springboot.dorm.domain.DormVisit;
 import com.springboot.dorm.domain.DormStudent;
 import com.springboot.dorm.service.IDormVisitService;
 import com.springboot.dorm.service.IDormStudentService;
+import com.springboot.common.utils.SecurityUtils;
 import com.springboot.common.core.page.TableDataInfo;
 import com.springboot.common.utils.poi.ExcelUtil;
+import java.util.stream.Collectors;
 
 /**
  * 来访人员登记Controller
@@ -47,14 +49,16 @@ public class DormVisitController extends BaseController
     @GetMapping("/list")
     public TableDataInfo list(DormVisit dormVisit)
     {
-        // 根据当前用户ID获取学生信息，只显示自己申请的访客记录
-        Long userId = getUserId();
-        DormStudent student = dormStudentService.selectDormStudentByUserId(userId);
-        if (student != null) {
-            dormVisit.setStuId(student.getStuId());
-        }
-        
         startPage();
+        if (isCurrentUserStudent()) {
+            DormStudent student = getCurrentStudent();
+            if (student != null) {
+                applyStudentVisitFilter(dormVisit, student);
+            } else {
+                dormVisit.setStuId(-1L);
+                dormVisit.setVisInterviewee("__FORBIDDEN__");
+            }
+        }
         List<DormVisit> list = dormVisitService.selectDormVisitList(dormVisit);
         return getDataTable(list);
     }
@@ -67,6 +71,15 @@ public class DormVisitController extends BaseController
     @PostMapping("/export")
     public void export(HttpServletResponse response, DormVisit dormVisit)
     {
+        if (isCurrentUserStudent()) {
+            DormStudent student = getCurrentStudent();
+            if (student != null) {
+                applyStudentVisitFilter(dormVisit, student);
+            } else {
+                dormVisit.setStuId(-1L);
+                dormVisit.setVisInterviewee("__FORBIDDEN__");
+            }
+        }
         List<DormVisit> list = dormVisitService.selectDormVisitList(dormVisit);
         ExcelUtil<DormVisit> util = new ExcelUtil<DormVisit>(DormVisit.class);
         util.exportExcel(response, list, "来访人员登记数据");
@@ -79,7 +92,11 @@ public class DormVisitController extends BaseController
     @GetMapping(value = "/{visId}")
     public AjaxResult getInfo(@PathVariable("visId") Long visId)
     {
-        return success(dormVisitService.selectDormVisitByVisId(visId));
+        DormVisit visit = dormVisitService.selectDormVisitByVisId(visId);
+        if (visit != null && isCurrentUserStudent() && !isOwnedByCurrentStudent(visit)) {
+            return AjaxResult.error("无权查看其他学生的访客登记");
+        }
+        return success(visit);
     }
 
     /**
@@ -95,6 +112,14 @@ public class DormVisitController extends BaseController
         DormStudent student = dormStudentService.selectDormStudentByUserId(userId);
         if (student != null) {
             dormVisit.setStuId(student.getStuId());
+            dormVisit.setVisInterviewee(student.getStuName());
+            dormVisit.setStuName(student.getStuName());
+            if (student.getfId() != null) {
+                dormVisit.setfId(student.getfId());
+            }
+            if (student.getDorId() != null) {
+                dormVisit.setDorId(Math.toIntExact(student.getDorId()));
+            }
         }
         
         // 设置默认审批状态为待审批
@@ -143,4 +168,45 @@ public class DormVisitController extends BaseController
         
         return toAjax(dormVisitService.updateDormVisit(updateEntity));
     }
+
+        private boolean isCurrentUserStudent()
+        {
+            try {
+                return SecurityUtils.getLoginUser().getUser().getRoles().stream()
+                    .anyMatch(role -> "student".equals(role.getRoleName()));
+            } catch (Exception ex) {
+                return false;
+            }
+        }
+
+        private DormStudent getCurrentStudent()
+        {
+            try {
+                return dormStudentService.selectDormStudentByUserId(SecurityUtils.getUserId());
+            } catch (Exception ex) {
+                return null;
+            }
+        }
+
+        private boolean isOwnedByCurrentStudent(DormVisit visit)
+        {
+            DormStudent student = getCurrentStudent();
+            if (student == null || visit == null) {
+                return false;
+            }
+            boolean matchedById = student.getStuId() != null && student.getStuId().equals(visit.getStuId());
+            boolean matchedByInterviewee = student.getStuName() != null && student.getStuName().equals(visit.getVisInterviewee());
+            return matchedById || matchedByInterviewee;
+        }
+
+        private void applyStudentVisitFilter(DormVisit target, DormStudent student)
+        {
+            if (student.getStuId() != null) {
+                target.setStuId(student.getStuId());
+            }
+            if (student.getStuName() != null) {
+                target.setStuName(student.getStuName());
+                target.setVisInterviewee(student.getStuName());
+            }
+        }
 }

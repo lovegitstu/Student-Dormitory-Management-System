@@ -89,6 +89,7 @@
               style="margin: 0; min-width: 75px;">拒绝</el-button>
             <el-button size="small" type="warning" icon="el-icon-s-check" @click="handleUpdate(scope.row)"
               v-hasPermi="['dormitory:exchange:edit']" v-hasRole="['admin', 'subadmin', 'man']"
+              v-if="scope.row.opinion === 0 && !isStudentRole"
               style="margin: 0; min-width: 75px;">审核</el-button>
             <el-button v-if="scope.row.opinion === 0" 
               size="small" type="success" icon="el-icon-edit" @click="handleUpdate(scope.row)"

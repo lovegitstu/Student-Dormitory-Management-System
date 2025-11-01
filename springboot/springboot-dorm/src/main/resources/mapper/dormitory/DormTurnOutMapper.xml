@@ -36,6 +36,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <include refid="selectDormTurnOutVo"/>
         <where>  
             <if test="stuId != null "> and dto.stu_id = #{stuId}</if>
+            <if test="stuName != null and stuName != ''"> and ds.stu_name = #{stuName}</if>
             <if test="excuse != null  and excuse != ''"> and dto.excuse like concat('%', #{excuse}, '%')</if>
             <if test="approvalStatus != null  and approvalStatus != ''"> and dto.approval_status = #{approvalStatus}</if>
             <if test="status != null  and status != ''"> and dto.status = #{status}</if>

@@ -70,7 +70,13 @@
           <dict-tag :options="dict.type.bed_status" :value="scope.row.bedStatus" />
         </template>
       </el-table-column>
-      <el-table-column label="入住人" align="center" prop="stuName" />
+      <el-table-column label="入住人" align="center">
+        <template slot-scope="scope">
+          <span v-if="!isStudentRole">{{ scope.row.stuName || '-' }}</span>
+          <span v-else-if="isOwnBed(scope.row)">{{ scope.row.stuName || '-' }}</span>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
       <!-- <el-table-column label="备注" align="center" prop="remark" /> -->
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="380">
         <template slot-scope="scope">
@@ -165,6 +171,7 @@ export default {
         email: null,
         phonenumber: null
       },
+      currentStudentId: null,
       // 弹出层标题
       title: "",
       // 是否显示弹出层
@@ -193,6 +200,12 @@ export default {
       }
     };
   },
+  computed: {
+    isStudentRole () {
+      const roles = (this.$store && this.$store.state && this.$store.state.user && this.$store.state.user.roles) || [];
+      return roles.includes('student');
+    }
+  },
   created() {
     const dorId = this.$route.params && this.$route.params.dorId;
 
@@ -206,6 +219,10 @@ export default {
 
     // 这行代码是用来获取所有宿舍列表（用于搜索栏的下拉选择），需要保留
     this.getAllDormList();
+
+    if (this.isStudentRole) {
+      this.loadCurrentStudent();
+    }
   },
   methods: {
     getDormitory (dorId) {
@@ -268,6 +285,22 @@ export default {
       this.ids = selection.map(item => item.bedId)
       this.single = selection.length !== 1
       this.multiple = !selection.length
+    },
+    loadCurrentStudent () {
+      getStudentByUserId(this.crruentUserId).then(response => {
+        if (response.data && response.data.stuId) {
+          this.currentStudentId = Number(response.data.stuId);
+        }
+      }).catch(error => {
+        console.error("获取当前学生信息失败:", error);
+        this.currentStudentId = null;
+      });
+    },
+    isOwnBed (row) {
+      if (!row || this.currentStudentId == null) {
+        return false;
+      }
+      return String(row.stuId) === String(this.currentStudentId);
     },
     /** 新增按钮操作 */
     handleAdd() {

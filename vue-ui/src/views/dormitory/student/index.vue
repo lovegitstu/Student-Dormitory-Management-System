@@ -98,7 +98,7 @@
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="250">
         <template slot-scope="scope">
-          <el-button v-if="(!isStudent && !isDormManager) || (isStudent && scope.row.stuCode === currentUser.user.userName)" size="small" type="success" icon="el-icon-edit" @click="handleUpdate(scope.row)"
+          <el-button v-if="(!isStudent && !isDormManager) || (isStudent && currentStudentInfo && scope.row.stuId === currentStudentInfo.stuId)" size="small" type="success" icon="el-icon-edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['dormitory:student:edit']">修改</el-button>
           <el-button v-if="!isStudent && !isDormManager" size="small" type="danger" icon="el-icon-delete" @click="handleDelete(scope.row)"
             v-hasPermi="['dormitory:student:remove']">删除</el-button>
@@ -165,7 +165,7 @@
 </template>
 
 <script>
-import { listStudent, getStudent, delStudent, addStudent, updateStudent } from "@/api/dormitory/student";
+import { listStudent, getStudent, delStudent, addStudent, updateStudent, getStudentByUserId } from "@/api/dormitory/student";
 import { listFloor } from "@/api/dormitory/floor";
 import { listDorm } from "@/api/dormitory/dorm";
 
@@ -202,6 +202,7 @@ export default {
       isDormManager: false,
       // 当前用户信息
       currentUser: {},
+      currentStudentInfo: null,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -214,6 +215,7 @@ export default {
         fId: null,
         dorId: null,
         stuStatus: null,
+        stuId: null
       },
       //选择宿舍楼参数
       selectParams: {
@@ -234,7 +236,6 @@ export default {
   },
   created () {
     this.checkUserRole();
-    this.getList();
     this.getAllFloorList();
     // this.getAllDormList();
   },
@@ -249,21 +250,41 @@ export default {
         this.isDormManager = this.currentUser.roles.some(role => role.roleKey === 'man');
       }
       // 如果是学生，设置查询参数只查询自己的信息
-      if (this.isStudent && this.currentUser.user) {
-        this.queryParams.stuCode = this.currentUser.user.userName;
+      if (this.isStudent) {
+        this.loadCurrentStudent();
+      } else {
+        this.getList();
       }
+    },
+    // 加载当前学生信息
+    loadCurrentStudent() {
+      if (!this.currentUser || !this.currentUser.user || !this.currentUser.user.userId) {
+        this.loading = false;
+        return;
+      }
+      const userId = this.currentUser.user.userId;
+      getStudentByUserId(userId)
+        .then(response => {
+          const student = response && response.data ? response.data : null;
+          this.currentStudentInfo = student;
+          if (student) {
+            this.queryParams.stuId = student.stuId;
+            this.queryParams.stuCode = student.stuCode;
+            this.queryParams.stuName = student.stuName;
+          }
+        })
+        .finally(() => {
+          this.handleQuery();
+        });
     },
     //父类选择器
     parentSelect: function (param) {
       if (param === 'querySelect') {
-        console.log("这是搜索select")
         this.selectParams.fId = this.queryParams.fId
       }
       if (param === 'addEditSelect') {
-        console.log("这是添加或者编辑select")
         this.selectParams.fId = this.form.fId
       }
-      console.log("选择参数-fId:" + this.selectParams.fId);
       listDorm(this.selectParams).then(response => {
         this.dormOptions = response.rows;
         this.form.dorId = response.rows.dorId
@@ -271,12 +292,6 @@ export default {
     },
     //子类选择器
     childSelect: function (param) {
-      if (param === 'querySelect') {
-        console.log(this.queryParams.dorId)
-      }
-      if (param === 'addEditSelect') {
-        console.log(this.form.dorId)
-      }
     },
     /** 查询学生信息列表 */
     getList () {
@@ -334,6 +349,11 @@ export default {
     /** 重置按钮操作 */
     resetQuery () {
       this.resetForm("queryForm");
+      if (this.isStudent && this.currentStudentInfo) {
+        this.queryParams.stuId = this.currentStudentInfo.stuId;
+        this.queryParams.stuCode = this.currentStudentInfo.stuCode;
+        this.queryParams.stuName = this.currentStudentInfo.stuName;
+      }
       this.handleQuery();
     },
     // 多选框选中数据
@@ -353,7 +373,7 @@ export default {
       this.reset();
       const stuId = row.stuId || this.ids
       // 如果是学生角色，只能修改自己的信息
-      if (this.isStudent && row && row.stuCode !== this.currentUser.user.userName) {
+      if (this.isStudent && row && this.currentStudentInfo && row.stuId !== this.currentStudentInfo.stuId) {
         this.$modal.msgError("您只能修改自己的信息");
         return;
       }

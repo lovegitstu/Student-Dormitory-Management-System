@@ -81,4 +81,64 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         truncate table sys_oper_log
     </update>
 
+	<select id="countOperLogsBetween" resultType="java.lang.Long">
+		select count(1)
+		from sys_oper_log
+		where oper_time &gt;= #{startTime}
+		  and oper_time &lt; #{endTime}
+	</select>
+
+	<select id="countOperLogsByStatusBetween" resultType="java.lang.Long">
+		select count(1)
+		from sys_oper_log
+		where oper_time &gt;= #{startTime}
+		  and oper_time &lt; #{endTime}
+		  and status = #{status}
+	</select>
+
+	<select id="selectAverageCostTimeBetween" resultType="java.lang.Double">
+		select avg(cost_time)
+		from sys_oper_log
+		where oper_time &gt;= #{startTime}
+		  and oper_time &lt; #{endTime}
+	</select>
+
+	<select id="countDistinctOperatorsBetween" resultType="java.lang.Long">
+		select count(distinct oper_name)
+		from sys_oper_log
+		where oper_time &gt;= #{startTime}
+		  and oper_time &lt; #{endTime}
+	</select>
+
+	<select id="selectDailyRequestTrend" resultType="java.util.LinkedHashMap">
+		select DATE_FORMAT(oper_time, '%Y-%m-%d') as stat_date,
+		       count(*) as total,
+		       sum(case when status = '1' then 1 else 0 end) as errors
+		from sys_oper_log
+		where oper_time &gt;= #{startTime}
+		  and oper_time &lt; #{endTime}
+		group by DATE_FORMAT(oper_time, '%Y-%m-%d')
+		order by stat_date asc
+	</select>
+
+	<select id="selectTopModules" resultType="java.util.LinkedHashMap">
+		select coalesce(nullif(title, ''), oper_url) as module_name,
+		       count(*) as total,
+		       sum(case when status = '1' then 1 else 0 end) as errors,
+		       round(sum(case when status = '1' then 1 else 0 end) / nullif(count(*), 0) * 100, 2) as error_rate
+		from sys_oper_log
+		where oper_time &gt;= #{startTime}
+		  and oper_time &lt; #{endTime}
+		group by coalesce(nullif(title, ''), oper_url)
+		order by total desc
+		limit #{limit}
+	</select>
+
+	<select id="selectRecentErrorLogs" resultMap="SysOperLogResult">
+		<include refid="selectOperLogVo"/>
+		where status = '1'
+		order by oper_time desc
+		limit #{limit}
+	</select>
+
 </mapper> 

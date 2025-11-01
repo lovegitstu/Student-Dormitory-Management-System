@@ -53,5 +53,34 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <update id="cleanLogininfor">
         truncate table sys_logininfor
     </update>
+
+	<select id="countLogininforByStatusBetween" resultType="java.lang.Long">
+		select count(1)
+		from sys_logininfor
+		where login_time &gt;= #{startTime}
+		  and login_time &lt; #{endTime}
+		  <if test="status != null and status != ''">
+		    and status = #{status}
+		  </if>
+	</select>
+
+	<select id="selectDailyLoginTrend" resultType="java.util.LinkedHashMap">
+		select DATE_FORMAT(login_time, '%Y-%m-%d') as stat_date,
+		       sum(case when status = '0' then 1 else 0 end) as success_count,
+		       sum(case when status = '1' then 1 else 0 end) as fail_count
+		from sys_logininfor
+		where login_time &gt;= #{startTime}
+		  and login_time &lt; #{endTime}
+		group by DATE_FORMAT(login_time, '%Y-%m-%d')
+		order by stat_date asc
+	</select>
+
+	<select id="selectRecentFailedLogin" resultMap="SysLogininforResult">
+		select info_id, user_name, ipaddr, login_location, browser, os, status, msg, login_time
+		from sys_logininfor
+		where status = '1'
+		order by login_time desc
+		limit #{limit}
+	</select>
     
 </mapper> 

@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,9 @@ import com.springboot.dorm.mapper.DormScoreMapper;
 import com.springboot.dorm.domain.DormStudent;
 import com.springboot.dorm.domain.DormScore;
 import com.springboot.dorm.domain.DormFloor;
+import com.springboot.system.mapper.SysOperLogMapper;
+import com.springboot.system.mapper.SysLogininforMapper;
+import com.springboot.system.mapper.SysUserMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,6 +78,15 @@ public class DormStatisticsServiceImpl implements IDormStatisticsService
     @Autowired
     private com.springboot.dorm.service.IDormBedService dormBedService;
 
+    @Autowired
+    private SysOperLogMapper sysOperLogMapper;
+
+    @Autowired
+    private SysLogininforMapper sysLogininforMapper;
+
+    @Autowired
+    private SysUserMapper sysUserMapper;
+
     /**
      * 获取系统管理员统计数据
      */
@@ -83,31 +97,7 @@ public class DormStatisticsServiceImpl implements IDormStatisticsService
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // 基础统计数据
-            result.put("totalStudents", dormStudentMapper.countTotalStudents());
-            result.put("totalBeds", dormBedMapper.countTotalBeds());
-            result.put("occupiedBeds", dormBedMapper.countOccupiedBeds());
-            result.put("totalRooms", dormRoomMapper.countTotalRooms());
-            result.put("totalFloors", dormFloorMapper.countTotalFloors());
-            
-            // 计算入住率
-            Integer totalBeds = (Integer) result.get("totalBeds");
-            Integer occupiedBeds = (Integer) result.get("occupiedBeds");
-            Double occupancyRate = totalBeds > 0 ? (occupiedBeds.doubleValue() / totalBeds.doubleValue()) * 100 : 0.0;
-            result.put("occupancyRate", Math.round(occupancyRate * 100.0) / 100.0);
-            
-            // 申请统计
-            result.put("pendingExchanges", dormExchangeMapper.countByStatus("0"));
-            result.put("pendingComes", dormComeMapper.countByStatus("0"));
-            result.put("pendingKeepBacks", dormKeepBackMapper.countByStatus("0"));
-            
-            // 报修统计
-            result.put("pendingRepairs", dormRepairMapper.countByStatus("0"));
-            result.put("processingRepairs", dormRepairMapper.countByStatus("1"));
-            result.put("completedRepairs", dormRepairMapper.countByStatus("2"));
-            
-            // 近7天数据趋势
-            result.put("weeklyTrend", getWeeklyTrend());
+            result.putAll(buildSystemLevelStatistics());
             
             logger.info("系统管理员统计数据获取成功");
         } catch (Exception e) {
@@ -116,6 +106,59 @@ public class DormStatisticsServiceImpl implements IDormStatisticsService
         }
         
         return result;
+    }
+
+    private Map<String, Object> buildSystemLevelStatistics() {
+        Map<String, Object> result = new HashMap<>();
+
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfToday = today.atStartOfDay();
+        LocalDateTime startOfTomorrow = startOfToday.plusDays(1);
+        LocalDateTime startOfYesterday = today.minusDays(1).atStartOfDay();
+        LocalDateTime startOf7DaysAgo = today.minusDays(6).atStartOfDay();
+        LocalDateTime startOf30DaysAgo = today.minusDays(29).atStartOfDay();
+        LocalDateTime startOfCurrentMonth = today.withDayOfMonth(1).atStartOfDay();
+        LocalDateTime startOfNextMonth = startOfCurrentMonth.plusMonths(1);
+
+        result.put("currentUsers", safeLong(sysUserMapper.countAllUsers()));
+        result.put("newUsersToday", safeLong(sysUserMapper.countUsersCreatedBetween(toDate(startOfToday), toDate(startOfTomorrow))));
+        result.put("newUsersThisMonth", safeLong(sysUserMapper.countUsersCreatedBetween(toDate(startOfCurrentMonth), toDate(startOfNextMonth))));
+
+        long requestsToday = safeLong(sysOperLogMapper.countOperLogsBetween(toDate(startOfToday), toDate(startOfTomorrow)));
+        result.put("requestsToday", requestsToday);
+        result.put("requestsYesterday", safeLong(sysOperLogMapper.countOperLogsBetween(toDate(startOfYesterday), toDate(startOfToday))));
+        result.put("requests7Days", safeLong(sysOperLogMapper.countOperLogsBetween(toDate(startOf7DaysAgo), toDate(startOfTomorrow))));
+        result.put("requests30Days", safeLong(sysOperLogMapper.countOperLogsBetween(toDate(startOf30DaysAgo), toDate(startOfTomorrow))));
+
+      result.put("errorRequestsToday", safeLong(sysOperLogMapper.countOperLogsByStatusBetween("1", toDate(startOfToday), toDate(startOfTomorrow))));
+        result.put("avgLatencyToday", safeDouble(sysOperLogMapper.selectAverageCostTimeBetween(toDate(startOfToday), toDate(startOfTomorrow))));
+        result.put("activeOperatorsToday", safeLong(sysOperLogMapper.countDistinctOperatorsBetween(toDate(startOfToday), toDate(startOfTomorrow))));
+
+        result.put("loginSuccessToday", safeLong(sysLogininforMapper.countLogininforByStatusBetween("0", toDate(startOfToday), toDate(startOfTomorrow))));
+        result.put("loginFailToday", safeLong(sysLogininforMapper.countLogininforByStatusBetween("1", toDate(startOfToday), toDate(startOfTomorrow))));
+        result.put("loginTrend", sysLogininforMapper.selectDailyLoginTrend(toDate(startOf7DaysAgo), toDate(startOfTomorrow)));
+
+        result.put("requestTrend", sysOperLogMapper.selectDailyRequestTrend(toDate(startOf7DaysAgo), toDate(startOfTomorrow)));
+        result.put("topModules", sysOperLogMapper.selectTopModules(toDate(startOf7DaysAgo), toDate(startOfTomorrow), 10));
+        result.put("recentErrors", sysOperLogMapper.selectRecentErrorLogs(5));
+        result.put("recentFailedLogins", sysLogininforMapper.selectRecentFailedLogin(5));
+
+        return result;
+    }
+
+    private java.util.Date toDate(LocalDateTime localDateTime) {
+        return java.util.Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+    }
+
+    private Long safeLong(Long value) {
+        return value == null ? 0L : value;
+    }
+
+    private Double safeDouble(Double value) {
+        if (value == null) {
+            return 0.0;
+        }
+        return Math.round(value * 100.0) / 100.0;
     }
 
     /**

@@ -37,6 +37,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <include refid="selectDormComeVo"/>
         <where>  
             <if test="stuId != null "> and dc.stu_id = #{stuId}</if>
+            <if test="stuName != null and stuName != ''"> and ds.stu_name = #{stuName}</if>
             <if test="datetime != null "> and dc.datetime like #{datetime}</if>
             <if test="opinion != null  and opinion != ''"> and dc.opinion = #{opinion}</if>
             <if test="comeType != null "> and dc.come_type = #{comeType}</if>

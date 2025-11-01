@@ -17,9 +17,13 @@ import com.springboot.common.core.controller.BaseController;
 import com.springboot.common.core.domain.AjaxResult;
 import com.springboot.common.enums.BusinessType;
 import com.springboot.dorm.domain.DormKeepBack;
+import com.springboot.dorm.domain.DormStudent;
 import com.springboot.dorm.service.IDormKeepBackService;
+import com.springboot.dorm.service.IDormStudentService;
+import com.springboot.common.utils.SecurityUtils;
 import com.springboot.common.utils.poi.ExcelUtil;
 import com.springboot.common.core.page.TableDataInfo;
+import java.util.stream.Collectors;
 
 /**
  * 留宿申请Controller
@@ -34,6 +38,9 @@ public class DormKeepBackController extends BaseController
     @Autowired
     private IDormKeepBackService dormKeepBackService;
 
+    @Autowired
+    private IDormStudentService dormStudentService;
+
     /**
      * 查询留宿申请列表
      */
@@ -42,6 +49,14 @@ public class DormKeepBackController extends BaseController
     public TableDataInfo list(DormKeepBack dormKeepBack)
     {
         startPage();
+        if (isCurrentUserStudent()) {
+            DormStudent currentStudent = getCurrentStudent();
+            if (currentStudent != null && currentStudent.getStuId() != null) {
+                dormKeepBack.setKbStudentid(Math.toIntExact(currentStudent.getStuId()));
+            } else {
+                dormKeepBack.setKbStudentid(-1);
+            }
+        }
         List<DormKeepBack> list = dormKeepBackService.selectDormKeepBackList(dormKeepBack);
         return getDataTable(list);
     }
@@ -66,7 +81,11 @@ public class DormKeepBackController extends BaseController
     @GetMapping(value = "/{kbId}")
     public AjaxResult getInfo(@PathVariable("kbId") Integer kbId)
     {
-        return success(dormKeepBackService.selectDormKeepBackByKbId(kbId));
+        DormKeepBack keepBack = dormKeepBackService.selectDormKeepBackByKbId(kbId);
+        if (keepBack != null && isCurrentUserStudent() && !isOwnedByCurrentStudent(keepBack)) {
+            return AjaxResult.error("无权查看其他学生的留宿申请");
+        }
+        return success(keepBack);
     }
 
     /**
@@ -100,5 +119,33 @@ public class DormKeepBackController extends BaseController
     public AjaxResult remove(@PathVariable Integer[] kbIds)
     {
         return toAjax(dormKeepBackService.deleteDormKeepBackByKbIds(kbIds));
+    }
+
+    private boolean isCurrentUserStudent()
+    {
+        try {
+            return SecurityUtils.getLoginUser().getUser().getRoles().stream()
+                .anyMatch(role -> "student".equals(role.getRoleName()));
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    private DormStudent getCurrentStudent()
+    {
+        try {
+            return dormStudentService.selectDormStudentByUserId(SecurityUtils.getUserId());
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private boolean isOwnedByCurrentStudent(DormKeepBack keepBack)
+    {
+        DormStudent currentStudent = getCurrentStudent();
+        if (currentStudent == null || keepBack == null || keepBack.getKbStudentid() == null) {
+            return false;
+        }
+        return currentStudent.getStuId() != null && keepBack.getKbStudentid().longValue() == currentStudent.getStuId();
     }
 }

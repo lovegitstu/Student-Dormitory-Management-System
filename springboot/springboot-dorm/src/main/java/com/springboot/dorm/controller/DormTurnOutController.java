@@ -20,8 +20,10 @@ import com.springboot.dorm.domain.DormTurnOut;
 import com.springboot.dorm.service.IDormTurnOutService;
 import com.springboot.dorm.service.IDormStudentService;
 import com.springboot.dorm.domain.DormStudent;
+import com.springboot.common.utils.SecurityUtils;
 import com.springboot.common.utils.poi.ExcelUtil;
 import com.springboot.common.core.page.TableDataInfo;
+import java.util.stream.Collectors;
 
 /**
  * 离校登记Controller
@@ -47,6 +49,15 @@ public class DormTurnOutController extends BaseController
     public TableDataInfo list(DormTurnOut dormTurnOut)
     {
         startPage();
+        if (isCurrentUserStudent()) {
+            DormStudent student = getCurrentStudent();
+            if (student != null) {
+                applyStudentFilter(dormTurnOut, student);
+            } else {
+                dormTurnOut.setStuId(-1L);
+                dormTurnOut.setStuName("__FORBIDDEN__");
+            }
+        }
         List<DormTurnOut> list = dormTurnOutService.selectDormTurnOutList(dormTurnOut);
         return getDataTable(list);
     }
@@ -59,6 +70,15 @@ public class DormTurnOutController extends BaseController
     @PostMapping("/export")
     public void export(HttpServletResponse response, DormTurnOut dormTurnOut)
     {
+        if (isCurrentUserStudent()) {
+            DormStudent student = getCurrentStudent();
+            if (student != null) {
+                applyStudentFilter(dormTurnOut, student);
+            } else {
+                dormTurnOut.setStuId(-1L);
+                dormTurnOut.setStuName("__FORBIDDEN__");
+            }
+        }
         List<DormTurnOut> list = dormTurnOutService.selectDormTurnOutList(dormTurnOut);
         ExcelUtil<DormTurnOut> util = new ExcelUtil<DormTurnOut>(DormTurnOut.class);
         util.exportExcel(response, list, "离校登记数据");
@@ -71,7 +91,11 @@ public class DormTurnOutController extends BaseController
     @GetMapping(value = "/{id}")
     public AjaxResult getInfo(@PathVariable("id") Long id)
     {
-        return success(dormTurnOutService.selectDormTurnOutById(id));
+        DormTurnOut turnOut = dormTurnOutService.selectDormTurnOutById(id);
+        if (turnOut != null && isCurrentUserStudent() && !isOwnedByCurrentStudent(turnOut)) {
+            return AjaxResult.error("无权查看其他学生的离校登记");
+        }
+        return success(turnOut);
     }
 
     /**
@@ -87,6 +111,9 @@ public class DormTurnOutController extends BaseController
         DormStudent student = dormStudentService.selectDormStudentByUserId(currentUserId);
         if (student != null) {
             dormTurnOut.setStuId(student.getStuId());
+            dormTurnOut.setStuName(student.getStuName());
+            dormTurnOut.setFId(student.getfId());
+            dormTurnOut.setDorId(student.getDorId());
         }
         return toAjax(dormTurnOutService.insertDormTurnOut(dormTurnOut));
     }
@@ -141,5 +168,45 @@ public class DormTurnOutController extends BaseController
         updateEntity.setId(dormTurnOut.getId());
         updateEntity.setApprovalStatus("3"); // 3表示已完成（学生已返校）
         return toAjax(dormTurnOutService.updateDormTurnOut(updateEntity));
+    }
+
+    private boolean isCurrentUserStudent()
+    {
+        try {
+            return SecurityUtils.getLoginUser().getUser().getRoles().stream()
+                .anyMatch(role -> "student".equals(role.getRoleName()));
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    private DormStudent getCurrentStudent()
+    {
+        try {
+            return dormStudentService.selectDormStudentByUserId(SecurityUtils.getUserId());
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private boolean isOwnedByCurrentStudent(DormTurnOut turnOut)
+    {
+        DormStudent student = getCurrentStudent();
+        if (student == null || turnOut == null) {
+            return false;
+        }
+        boolean matchedById = student.getStuId() != null && student.getStuId().equals(turnOut.getStuId());
+        boolean matchedByName = student.getStuName() != null && student.getStuName().equals(turnOut.getStuName());
+        return matchedById || matchedByName;
+    }
+
+    private void applyStudentFilter(DormTurnOut target, DormStudent student)
+    {
+        if (student.getStuId() != null) {
+            target.setStuId(student.getStuId());
+        }
+        if (student.getStuName() != null) {
+            target.setStuName(student.getStuName());
+        }
     }
 }

@@ -20,9 +20,10 @@ import com.springboot.dorm.domain.DormCome;
 import com.springboot.dorm.service.IDormComeService;
 import com.springboot.dorm.service.IDormStudentService;
 import com.springboot.dorm.domain.DormStudent;
+import com.springboot.common.utils.SecurityUtils;
 import com.springboot.common.core.page.TableDataInfo;
 import com.springboot.common.utils.poi.ExcelUtil;
-import com.springboot.common.core.page.TableDataInfo;
+import java.util.stream.Collectors;
 
 /**
  * 回校申请Controller
@@ -48,6 +49,15 @@ public class DormComeController extends BaseController
     public TableDataInfo list(DormCome dormCome)
     {
         startPage();
+        if (isCurrentUserStudent()) {
+            DormStudent currentStudent = getCurrentStudent();
+            if (currentStudent != null) {
+                applyStudentFilter(dormCome, currentStudent);
+            } else {
+                dormCome.setStuId(-1L);
+                dormCome.setStuName("__FORBIDDEN__");
+            }
+        }
         List<DormCome> list = dormComeService.selectDormComeList(dormCome);
         return getDataTable(list);
     }
@@ -60,6 +70,15 @@ public class DormComeController extends BaseController
     @PostMapping("/export")
     public void export(HttpServletResponse response, DormCome dormCome)
     {
+        if (isCurrentUserStudent()) {
+            DormStudent currentStudent = getCurrentStudent();
+            if (currentStudent != null) {
+                applyStudentFilter(dormCome, currentStudent);
+            } else {
+                dormCome.setStuId(-1L);
+                dormCome.setStuName("__FORBIDDEN__");
+            }
+        }
         List<DormCome> list = dormComeService.selectDormComeList(dormCome);
         ExcelUtil<DormCome> util = new ExcelUtil<DormCome>(DormCome.class);
         util.exportExcel(response, list, "回校申请数据");
@@ -72,7 +91,11 @@ public class DormComeController extends BaseController
     @GetMapping(value = "/{id}")
     public AjaxResult getInfo(@PathVariable("id") Long id)
     {
-        return success(dormComeService.selectDormComeById(id));
+        DormCome come = dormComeService.selectDormComeById(id);
+        if (come != null && isCurrentUserStudent() && !isOwnedByCurrentStudent(come)) {
+            return AjaxResult.error("无权查看其他学生的回校申请");
+        }
+        return success(come);
     }
 
     /**
@@ -88,6 +111,9 @@ public class DormComeController extends BaseController
         DormStudent student = dormStudentService.selectDormStudentByUserId(userId);
         if (student != null) {
             dormCome.setStuId(student.getStuId());
+            dormCome.setStuName(student.getStuName());
+            dormCome.setFId(student.getfId());
+            dormCome.setDorId(student.getDorId());
         }
         
         return toAjax(dormComeService.insertDormCome(dormCome));
@@ -128,5 +154,45 @@ public class DormComeController extends BaseController
         updateEntity.setId(dormCome.getId());
         updateEntity.setOpinion(dormCome.getOpinion());
         return toAjax(dormComeService.updateDormCome(updateEntity));
+    }
+
+    private boolean isCurrentUserStudent()
+    {
+        try {
+            return SecurityUtils.getLoginUser().getUser().getRoles().stream()
+                .anyMatch(role -> "student".equals(role.getRoleName()));
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    private DormStudent getCurrentStudent()
+    {
+        try {
+            return dormStudentService.selectDormStudentByUserId(SecurityUtils.getUserId());
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private boolean isOwnedByCurrentStudent(DormCome dormCome)
+    {
+        DormStudent currentStudent = getCurrentStudent();
+        if (currentStudent == null || dormCome == null) {
+            return false;
+        }
+        boolean matchedById = currentStudent.getStuId() != null && currentStudent.getStuId().equals(dormCome.getStuId());
+        boolean matchedByName = currentStudent.getStuName() != null && currentStudent.getStuName().equals(dormCome.getStuName());
+        return matchedById || matchedByName;
+    }
+
+    private void applyStudentFilter(DormCome dormCome, DormStudent student)
+    {
+        if (student.getStuId() != null) {
+            dormCome.setStuId(student.getStuId());
+        }
+        if (student.getStuName() != null) {
+            dormCome.setStuName(student.getStuName());
+        }
     }
 }

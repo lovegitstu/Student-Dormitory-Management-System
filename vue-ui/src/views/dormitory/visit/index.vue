@@ -12,26 +12,29 @@
           <el-option v-for="dict in dict.type.visit_type" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
-      <el-form-item label="" prop="visInterviewee">
-        <el-input v-model="queryParams.visInterviewee" placeholder="请输入被访人" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="" prop="fId">
-        <el-select v-model="queryParams.fId" placeholder="请选择宿舍楼" @change="parentSelect('querySelect')" clearable>
-          <el-option v-for="item in floorOptions" :key="item.fId" :label="item.fName" :value="item.fId"></el-option>
-        </el-select>
-      </el-form-item>
-      <el-form-item label="" prop="dorId">
-        <el-select v-model="queryParams.dorId" placeholder="请选择来访宿舍" @change="childSelect('querySelect')" clearable>
-          <el-option v-for="item in dormOptions" :key="item.dorId" :label="item.dorName" :value="item.dorId"></el-option>
-        </el-select>
-      </el-form-item>
-      <el-form-item label="" prop="approvalStatus">
-        <el-select v-model="queryParams.approvalStatus" placeholder="请选择审批状态" clearable>
-          <el-option label="待审批" value="0" />
-          <el-option label="已通过" value="1" />
-          <el-option label="已拒绝" value="2" />
-        </el-select>
-      </el-form-item>
+        <el-form-item v-if="!isStudentRole" label="" prop="visInterviewee">
+          <el-input v-model="queryParams.visInterviewee" placeholder="请输入被访人" clearable @keyup.enter.native="handleQuery" />
+        </el-form-item>
+        <el-form-item v-else label="" prop="visInterviewee">
+          <el-input v-model="queryParams.visInterviewee" placeholder="被访人" disabled />
+        </el-form-item>
+        <el-form-item v-if="!isStudentRole" label="" prop="fId">
+          <el-select v-model="queryParams.fId" placeholder="请选择宿舍楼" @change="parentSelect('querySelect')" clearable>
+            <el-option v-for="item in floorOptions" :key="item.fId" :label="item.fName" :value="item.fId"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="!isStudentRole" label="" prop="dorId">
+          <el-select v-model="queryParams.dorId" placeholder="请选择来访宿舍" @change="childSelect('querySelect')" clearable>
+            <el-option v-for="item in dormOptions" :key="item.dorId" :label="item.dorName" :value="item.dorId"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="!isStudentRole" label="" prop="approvalStatus">
+          <el-select v-model="queryParams.approvalStatus" placeholder="请选择审批状态" clearable>
+            <el-option label="待审批" value="0" />
+            <el-option label="已通过" value="1" />
+            <el-option label="已拒绝" value="2" />
+          </el-select>
+        </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
@@ -192,6 +195,7 @@ export default {
         dorId: null,
         visDatetime: null,
         approvalStatus: null,
+        stuId: null
       },
       //选择宿舍楼参数
       selectParams: {
@@ -206,25 +210,44 @@ export default {
       }
     };
   },
+  computed: {
+    isStudentRole () {
+      const roles = (this.$store && this.$store.state && this.$store.state.user && this.$store.state.user.roles) || [];
+      return roles.includes('student');
+    }
+  },
   created () {
-    this.getList();
-    this.getAllFloorList();
-    this.getCurrentUserStudentInfo();
+    this.initializePage();
   },
   methods: {
+    async initializePage () {
+      if (this.isStudentRole) {
+        await this.getCurrentUserStudentInfo();
+      }
+      this.getAllFloorList();
+      this.getList();
+    },
     // 获取当前用户的学生信息
     getCurrentUserStudentInfo() {
       const currentUserId = this.$store.state.user.userId;
-      if (currentUserId) {
-        getStudentByUserId(currentUserId).then(response => {
-          if (response.data) {
-            this.currentStudentInfo = response.data;
-            console.log('当前用户学生信息:', this.currentStudentInfo);
-          }
-        }).catch(error => {
-          console.error('获取当前用户学生信息失败:', error);
-        });
+      if (!currentUserId) {
+        return Promise.resolve();
       }
+      return getStudentByUserId(currentUserId).then(response => {
+        if (response.data) {
+          this.currentStudentInfo = response.data;
+          this.queryParams.visInterviewee = response.data.stuName || '';
+          this.queryParams.stuId = response.data.stuId || null;
+          if (response.data.fId) {
+            this.queryParams.fId = response.data.fId;
+          }
+          if (response.data.dorId) {
+            this.queryParams.dorId = response.data.dorId;
+          }
+        }
+      }).catch(error => {
+        console.error('获取当前用户学生信息失败:', error);
+      });
     },
     //父类选择器
     parentSelect: function (param) {
@@ -260,6 +283,10 @@ export default {
     },
     /** 查询来访人员登记列表 */
     getList () {
+      if (this.isStudentRole && this.currentStudentInfo) {
+        this.queryParams.visInterviewee = this.currentStudentInfo.stuName;
+        this.queryParams.stuId = this.currentStudentInfo.stuId;
+      }
       this.loading = true;
       listVisit(this.queryParams).then(response => {
         this.visitList = response.rows;
@@ -299,6 +326,12 @@ export default {
     /** 重置按钮操作 */
     resetQuery () {
       this.resetForm("queryForm");
+      if (this.isStudentRole && this.currentStudentInfo) {
+        this.queryParams.visInterviewee = this.currentStudentInfo.stuName;
+        this.queryParams.fId = this.currentStudentInfo.fId;
+        this.queryParams.dorId = this.currentStudentInfo.dorId;
+        this.queryParams.stuId = this.currentStudentInfo.stuId;
+      }
       this.handleQuery();
     },
     // 多选框选中数据

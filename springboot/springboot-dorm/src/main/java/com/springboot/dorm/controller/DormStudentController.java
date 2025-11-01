@@ -48,21 +48,15 @@ public class DormStudentController extends BaseController
     @GetMapping("/list")
     public TableDataInfo list(DormStudent dormStudent)
     {
-        // 检查当前用户是否为学生角色
-        boolean isStudent = SecurityUtils.getLoginUser().getUser().getRoles().stream()
-                .anyMatch(role -> "student".equals(role.getRoleKey()));
-        
-        // 如果是学生角色，只能查询自己的信息
-        if (isStudent) {
-            String currentUserName = SecurityUtils.getUsername();
-            try {
-                Integer stuCode = Integer.parseInt(currentUserName);
-                dormStudent.setStuCode(stuCode);
-            } catch (NumberFormatException e) {
-                // 如果用户名不是数字，记录错误并返回空结果
-                logger.error("学生用户名不是有效的学号: " + currentUserName);
+        if (isCurrentUserStudent()) {
+            DormStudent currentStudent = getCurrentStudent();
+            if (currentStudent == null) {
+                logger.warn("学生角色未找到关联的学生信息，返回空列表");
                 return getDataTable(new ArrayList<>());
             }
+            dormStudent.setStuId(currentStudent.getStuId());
+            dormStudent.setStuCode(currentStudent.getStuCode());
+            dormStudent.setStuName(currentStudent.getStuName());
         }
         
         startPage();
@@ -78,6 +72,18 @@ public class DormStudentController extends BaseController
     @PostMapping("/export")
     public void export(HttpServletResponse response, DormStudent dormStudent)
     {
+        if (isCurrentUserStudent()) {
+            DormStudent currentStudent = getCurrentStudent();
+            if (currentStudent == null) {
+                logger.warn("学生角色未找到关联的学生信息，阻止导出");
+                ExcelUtil<DormStudent> util = new ExcelUtil<DormStudent>(DormStudent.class);
+                util.exportExcel(response, new ArrayList<>(), "学生信息数据");
+                return;
+            }
+            dormStudent.setStuId(currentStudent.getStuId());
+            dormStudent.setStuCode(currentStudent.getStuCode());
+            dormStudent.setStuName(currentStudent.getStuName());
+        }
         List<DormStudent> list = dormStudentService.selectDormStudentList(dormStudent);
         ExcelUtil<DormStudent> util = new ExcelUtil<DormStudent>(DormStudent.class);
         util.exportExcel(response, list, "学生信息数据");
@@ -90,6 +96,12 @@ public class DormStudentController extends BaseController
     @GetMapping(value = "/{stuId}")
     public AjaxResult getInfo(@PathVariable("stuId") Long stuId)
     {
+        if (isCurrentUserStudent()) {
+            DormStudent currentStudent = getCurrentStudent();
+            if (currentStudent == null || !currentStudent.getStuId().equals(stuId)) {
+                return AjaxResult.error("无权查看其他学生的信息");
+            }
+        }
         return success(dormStudentService.selectDormStudentByStuId(stuId));
     }
 
@@ -100,6 +112,9 @@ public class DormStudentController extends BaseController
     @GetMapping(value = "/user/{userId}")
     public AjaxResult getInfoByUserId(@PathVariable("userId") Long userId)
     {
+        if (isCurrentUserStudent() && !SecurityUtils.getUserId().equals(userId)) {
+            return AjaxResult.error("无权查看其他学生的信息");
+        }
         logger.info("=== 通过用户ID获取学生信息开始 ===");
         logger.info("请求的用户ID: {}", userId);
         logger.info("当前登录用户: {}", SecurityUtils.getUsername());
@@ -145,22 +160,16 @@ public class DormStudentController extends BaseController
     public AjaxResult edit(@RequestBody DormStudent dormStudent)
     {
         // 检查当前用户是否为学生角色
-        boolean isStudent = SecurityUtils.getLoginUser().getUser().getRoles().stream()
-                .anyMatch(role -> "student".equals(role.getRoleKey()));
-        
-        // 如果是学生角色，只能修改自己的信息
-        if (isStudent) {
-            String currentUserName = SecurityUtils.getUsername();
-            try {
-                Integer currentStuCode = Integer.parseInt(currentUserName);
-                // 验证学生只能修改自己的信息
-                if (!currentStuCode.equals(dormStudent.getStuCode())) {
-                    return AjaxResult.error("学生只能修改自己的信息");
-                }
-            } catch (NumberFormatException e) {
-                logger.error("学生用户名不是有效的学号: " + currentUserName);
-                return AjaxResult.error("用户名格式错误");
+        if (isCurrentUserStudent()) {
+            DormStudent currentStudent = getCurrentStudent();
+            if (currentStudent == null) {
+                return AjaxResult.error("未找到学生信息");
             }
+            if (dormStudent.getStuId() != null && !dormStudent.getStuId().equals(currentStudent.getStuId())) {
+                return AjaxResult.error("学生只能修改自己的信息");
+            }
+            dormStudent.setStuId(currentStudent.getStuId());
+            dormStudent.setStuCode(currentStudent.getStuCode());
         }
         
         return toAjax(dormStudentService.updateDormStudent(dormStudent));
@@ -175,5 +184,25 @@ public class DormStudentController extends BaseController
     public AjaxResult remove(@PathVariable Long[] stuIds)
     {
         return toAjax(dormStudentService.deleteDormStudentByStuIds(stuIds));
+    }
+
+    private boolean isCurrentUserStudent()
+    {
+        try {
+            return SecurityUtils.getLoginUser().getUser().getRoles().stream()
+                .anyMatch(role -> "student".equals(role.getRoleKey()) || "student".equals(role.getRoleName()));
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    private DormStudent getCurrentStudent()
+    {
+        try {
+            return dormStudentService.selectDormStudentByUserId(SecurityUtils.getUserId());
+        } catch (Exception ex) {
+            logger.error("获取当前学生信息失败", ex);
+            return null;
+        }
     }
 }

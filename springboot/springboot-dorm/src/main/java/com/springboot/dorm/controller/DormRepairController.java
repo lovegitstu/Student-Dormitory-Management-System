@@ -20,8 +20,10 @@ import com.springboot.dorm.domain.DormRepair;
 import com.springboot.dorm.service.IDormRepairService;
 import com.springboot.dorm.service.IDormStudentService;
 import com.springboot.dorm.domain.DormStudent;
+import com.springboot.common.utils.SecurityUtils;
 import com.springboot.common.utils.poi.ExcelUtil;
 import com.springboot.common.core.page.TableDataInfo;
+import java.util.stream.Collectors;
 
 /**
  * 维修工单Controller
@@ -47,6 +49,14 @@ public class DormRepairController extends BaseController
     public TableDataInfo list(DormRepair dormRepair)
     {
         startPage();
+        if (isCurrentUserStudent()) {
+            DormStudent currentStudent = getCurrentStudent();
+            if (currentStudent != null && currentStudent.getStuName() != null) {
+                dormRepair.setNickName(currentStudent.getStuName());
+            } else {
+                dormRepair.setNickName(getUsername());
+            }
+        }
         List<DormRepair> list = dormRepairService.selectDormRepairList(dormRepair);
         return getDataTable(list);
     }
@@ -71,7 +81,11 @@ public class DormRepairController extends BaseController
     @GetMapping(value = "/{repairId}")
     public AjaxResult getInfo(@PathVariable("repairId") Integer repairId)
     {
-        return success(dormRepairService.selectDormRepairByRepairId(repairId));
+        DormRepair repair = dormRepairService.selectDormRepairByRepairId(repairId);
+        if (repair != null && isCurrentUserStudent() && !isOwnedByCurrentStudent(repair)) {
+            return AjaxResult.error("无权查看其他学生的维修工单");
+        }
+        return AjaxResult.success(repair);
     }
 
     /**
@@ -134,5 +148,37 @@ public class DormRepairController extends BaseController
     public AjaxResult remove(@PathVariable Integer[] repairIds)
     {
         return toAjax(dormRepairService.deleteDormRepairByRepairIds(repairIds));
+    }
+
+    private boolean isCurrentUserStudent()
+    {
+        try {
+            return SecurityUtils.getLoginUser().getUser().getRoles().stream()
+                .anyMatch(role -> "student".equals(role.getRoleName()));
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    private DormStudent getCurrentStudent()
+    {
+        try {
+            Long userId = SecurityUtils.getUserId();
+            return dormStudentService.selectDormStudentByUserId(userId);
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private boolean isOwnedByCurrentStudent(DormRepair repair)
+    {
+        if (repair == null) {
+            return false;
+        }
+        DormStudent currentStudent = getCurrentStudent();
+        if (currentStudent != null && currentStudent.getStuName() != null) {
+            return currentStudent.getStuName().equals(repair.getNickName());
+        }
+        return getUsername().equals(repair.getNickName());
     }
 }

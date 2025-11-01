@@ -1,12 +1,12 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="" prop="fId" v-hasRole="['admin', 'subadmin']">
+      <el-form-item label="" prop="fId" v-if="!isStudentRole" v-hasRole="['admin', 'subadmin']">
         <el-select v-model="queryParams.fId" placeholder="请选择楼栋" clearable>
           <el-option v-for="item in floorOptions" :key="item.fId" :label="item.fName" :value="item.fId" />
         </el-select>
       </el-form-item>
-      <el-form-item label="" prop="dorId" v-hasRole="['subadmin', 'admin']">
+      <el-form-item label="" prop="dorId" v-if="!isStudentRole" v-hasRole="['subadmin', 'admin']">
         <el-select v-model="queryParams.dorId" placeholder="请选择宿舍" @change="childSelect('querySelect')" clearable>
           <el-option v-for="item in dormOptions" :key="item.dorId" :label="item.dorName" :value="item.dorId"></el-option>
         </el-select>
@@ -19,15 +19,18 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item> -->
-      <el-form-item label="" prop="stuName">
+      <el-form-item v-if="!isStudentRole" label="" prop="stuName">
         <el-input v-model="queryParams.stuName" placeholder="请输入学生姓名" clearable @keyup.enter.native="handleQuery" />
+      </el-form-item>
+      <el-form-item v-else label="" prop="stuName">
+        <el-input v-model="queryParams.stuName" placeholder="学生姓名" disabled />
       </el-form-item>
       <el-form-item label="" prop="datetime">
         <el-date-picker clearable v-model="queryParams.toDatetime" type="date" value-format="yyyy-MM-dd"
           placeholder="请选择离校时间">
         </el-date-picker>
       </el-form-item>
-      <el-form-item label="" prop="approvalStatus" v-hasRole="['admin', 'subadmin']">
+      <el-form-item label="" prop="approvalStatus" v-if="!isStudentRole" v-hasRole="['admin', 'subadmin']">
         <el-select v-model="queryParams.approvalStatus" placeholder="请选择审批状态" clearable>
           <el-option
             v-for="dict in dict.type.approval_status"
@@ -167,7 +170,7 @@
 import { listOut, getOut, delOut, addOut, updateOut, approveOut, confirmReturn } from "@/api/dormitory/out";
 import { listDorm } from "@/api/dormitory/dorm";
 import { listFloor } from "@/api/dormitory/floor";
-import { getInfo } from "@/api/login"
+import { getStudentByUserId } from "@/api/dormitory/student";
 
 export default {
   name: "Out",
@@ -198,6 +201,7 @@ export default {
       currentRole: this.$store.state.user.roles[0],
       // 是否显示弹出层
       open: false,
+  currentStudentInfo: null,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -232,11 +236,23 @@ export default {
       }
     };
   },
+  computed: {
+    isStudentRole () {
+      const roles = (this.$store && this.$store.state && this.$store.state.user && this.$store.state.user.roles) || [];
+      return roles.includes('student');
+    }
+  },
   created () {
-    this.getList();
-    this.getAllFloorList();
+    this.initializePage();
   },
   methods: {
+    async initializePage () {
+      if (this.isStudentRole) {
+        await this.loadCurrentStudent();
+      }
+      this.getAllFloorList();
+      this.getList();
+    },
     //父类选择器
     parentSelect: function (param) {
       if (param === 'querySelect') {
@@ -264,17 +280,17 @@ export default {
     },
     /** 查询离校登记列表 */
     getList () {
+      if (this.isStudentRole && this.currentStudentInfo) {
+        this.queryParams.stuId = this.currentStudentInfo.stuId;
+        this.queryParams.stuName = this.currentStudentInfo.stuName;
+        this.queryParams.fId = this.currentStudentInfo.fId;
+        this.queryParams.dorId = this.currentStudentInfo.dorId;
+      }
       this.loading = true;
       listOut(this.queryParams).then(response => {
         this.outList = response.rows;
         this.total = response.total;
         this.loading = false;
-        
-        // 添加调试信息
-        console.log('离校申请列表数据:', this.outList);
-        console.log('当前用户角色:', this.currentRole);
-        console.log('用户权限:', this.$store.getters.permissions);
-        console.log('用户角色列表:', this.$store.getters.roles);
       });
     },
     getAllFloorList () {
@@ -313,6 +329,12 @@ export default {
     /** 重置按钮操作 */
     resetQuery () {
       this.resetForm("queryForm");
+      if (this.isStudentRole && this.currentStudentInfo) {
+        this.queryParams.stuId = this.currentStudentInfo.stuId;
+        this.queryParams.stuName = this.currentStudentInfo.stuName;
+        this.queryParams.fId = this.currentStudentInfo.fId;
+        this.queryParams.dorId = this.currentStudentInfo.dorId;
+      }
       this.handleQuery();
     },
     // 多选框选中数据
@@ -380,11 +402,6 @@ export default {
     },
     /** 审批操作 */
     handleApprove(row, status) {
-      console.log('离校申请审批按钮点击 - 行数据:', row);
-      console.log('审批状态:', status);
-      console.log('当前用户角色:', this.currentRole);
-      console.log('用户权限:', this.$store.getters.permissions);
-      
       const statusText = status === '1' ? '通过' : '拒绝';
       this.$modal.confirm(`是否确认${statusText}该离校申请？`).then(() => {
         const data = {
@@ -403,9 +420,6 @@ export default {
     },
     /** 返校确认操作 */
     handleConfirmReturn(row) {
-      console.log('返校确认按钮点击 - 行数据:', row);
-      console.log('当前用户角色:', this.currentRole);
-      
       this.$modal.confirm('是否确认该学生已返校？确认后该离校申请将标记为已完成。').then(() => {
         const data = {
           id: row.id
@@ -424,31 +438,43 @@ export default {
     },
     /** 加载当前用户信息 */
     loadCurrentUserInfo () {
-      // 获取当前登录用户信息
-      getInfo().then(response => {
-        const user = response.user;
-        if (user) {
-          // 设置学生ID
-          this.form.stuId = user.userId;
-          // 设置学生姓名
-          this.form.stuName = user.nickName || user.userName;
-          // 设置宿舍楼ID
-          if (user.fId) {
-            this.form.fId = user.fId;
-            // 根据宿舍楼ID获取宿舍列表
-            this.selectParams.fId = user.fId;
-            listDorm(this.selectParams).then(dormResponse => {
-              this.dormOptions = dormResponse.rows;
-              // 设置宿舍号
-              if (user.dorId) {
-                this.form.dorId = user.dorId;
-              }
-            });
-          }
+      if (this.currentStudentInfo) {
+        const student = this.currentStudentInfo;
+        this.form.stuId = student.stuId;
+        this.form.stuName = student.stuName;
+        this.form.fId = student.fId;
+        this.form.dorId = student.dorId;
+        if (student.fId) {
+          this.selectParams.fId = student.fId;
+          listDorm(this.selectParams).then(dormResponse => {
+            this.dormOptions = dormResponse.rows;
+          });
         }
-      }).catch(error => {
-        console.error('获取用户信息失败:', error);
-      });
+      } else {
+        this.loadCurrentStudent().then(() => {
+          if (this.currentStudentInfo) {
+            this.loadCurrentUserInfo();
+          }
+        });
+      }
+    },
+    async loadCurrentStudent () {
+      const currentUserId = this.$store.state.user.userId;
+      if (!currentUserId) {
+        return;
+      }
+      try {
+        const response = await getStudentByUserId(currentUserId);
+        if (response.data) {
+          this.currentStudentInfo = response.data;
+          this.queryParams.stuId = response.data.stuId;
+          this.queryParams.stuName = response.data.stuName;
+          this.queryParams.fId = response.data.fId;
+          this.queryParams.dorId = response.data.dorId;
+        }
+      } catch (error) {
+        console.error('获取学生信息失败:', error);
+      }
     }
   }
 };

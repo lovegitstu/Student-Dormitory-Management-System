@@ -17,10 +17,13 @@ import com.springboot.common.core.controller.BaseController;
 import com.springboot.common.core.domain.AjaxResult;
 import com.springboot.common.enums.BusinessType;
 import com.springboot.dorm.domain.DormExchange;
+import com.springboot.dorm.domain.DormStudent;
 import com.springboot.dorm.service.IDormExchangeService;
+import com.springboot.dorm.service.IDormStudentService;
+import com.springboot.common.utils.SecurityUtils;
 import com.springboot.common.utils.poi.ExcelUtil;
 import com.springboot.common.core.page.TableDataInfo;
-import com.springboot.common.utils.SecurityUtils;
+import java.util.stream.Collectors;
 
 /**
  * 换宿申请Controller
@@ -34,6 +37,9 @@ public class DormExchangeController extends BaseController
 {
     @Autowired
     private IDormExchangeService dormExchangeService;
+
+    @Autowired
+    private IDormStudentService dormStudentService;
 
     /**
      * 查询换宿申请列表
@@ -49,6 +55,14 @@ public class DormExchangeController extends BaseController
         System.out.println("=== 权限调试结束 ===");
         
         startPage();
+        if (isCurrentUserStudent()) {
+            DormStudent currentStudent = getCurrentStudent();
+            if (currentStudent != null) {
+                dormExchange.setStuId(currentStudent.getStuId());
+            } else {
+                dormExchange.setStuId(-1L);
+            }
+        }
         List<DormExchange> list = dormExchangeService.selectDormExchangeList(dormExchange);
         return getDataTable(list);
     }
@@ -73,7 +87,11 @@ public class DormExchangeController extends BaseController
     @GetMapping(value = "/{id}")
     public AjaxResult getInfo(@PathVariable("id") Long id)
     {
-        return success(dormExchangeService.selectDormExchangeById(id));
+        DormExchange exchange = dormExchangeService.selectDormExchangeById(id);
+        if (exchange != null && isCurrentUserStudent() && !isOwnedByCurrentStudent(exchange)) {
+            return AjaxResult.error("无权查看其他学生的换宿申请");
+        }
+        return success(exchange);
     }
 
     /**
@@ -94,6 +112,14 @@ public class DormExchangeController extends BaseController
         System.out.println("=== 权限调试结束 ===");
         
         try {
+            if (isCurrentUserStudent()) {
+                DormStudent currentStudent = getCurrentStudent();
+                if (currentStudent != null) {
+                    dormExchange.setStuId(currentStudent.getStuId());
+                    dormExchange.setStuName(currentStudent.getStuName());
+                    dormExchange.setCreateBy(getUsername());
+                }
+            }
             int result = dormExchangeService.insertDormExchange(dormExchange);
             System.out.println("控制器处理结果: " + (result > 0 ? "成功" : "失败"));
             return toAjax(result);
@@ -162,4 +188,32 @@ public class DormExchangeController extends BaseController
     {
         return toAjax(dormExchangeService.batchApproveDormExchange(dormExchanges));
     }
+
+        private boolean isCurrentUserStudent()
+        {
+            try {
+                return SecurityUtils.getLoginUser().getUser().getRoles().stream()
+                    .anyMatch(role -> "student".equals(role.getRoleName()));
+            } catch (Exception ex) {
+                return false;
+            }
+        }
+
+        private DormStudent getCurrentStudent()
+        {
+            try {
+                return dormStudentService.selectDormStudentByUserId(SecurityUtils.getUserId());
+            } catch (Exception ex) {
+                return null;
+            }
+        }
+
+        private boolean isOwnedByCurrentStudent(DormExchange dormExchange)
+        {
+            DormStudent currentStudent = getCurrentStudent();
+            if (currentStudent == null || dormExchange == null) {
+                return false;
+            }
+            return currentStudent.getStuId() != null && currentStudent.getStuId().equals(dormExchange.getStuId());
+        }
 }

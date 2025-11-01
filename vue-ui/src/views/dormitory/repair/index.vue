@@ -216,6 +216,7 @@
 import { listRepair, getRepair, delRepair, addRepair, updateRepair, approveRepair } from "@/api/dormitory/repair";
 import { listFloor } from "@/api/dormitory/floor";
 import { listDorm } from "@/api/dormitory/dorm";
+import { getInfo } from "@/api/login";
 
 export default {
   name: "Repair",
@@ -265,6 +266,11 @@ export default {
       // 表单参数
       form: {},
       jobData: {},
+      currentUserContact: {
+        phone: '',
+        nickName: ''
+      },
+      userProfileLoaded: false,
       // 表单校验
       rules: {
         fId: [
@@ -292,6 +298,7 @@ export default {
   created () {
     this.getList();
     this.getAllFloorList();
+    this.fetchCurrentUserProfile();
   },
   methods: {
     //父类选择器
@@ -334,6 +341,31 @@ export default {
         this.total = response.total;
         this.loading = false;
       });
+    },
+    fetchCurrentUserProfile () {
+      if (this.userProfileLoaded) {
+        return Promise.resolve();
+      }
+      return getInfo().then(response => {
+        const user = response.user || {};
+        this.currentUserContact.nickName = user.nickName || user.userName || '';
+        this.currentUserContact.phone = user.phonenumber || '';
+      }).catch(error => {
+        console.error('获取用户信息失败:', error);
+      }).finally(() => {
+        this.userProfileLoaded = true;
+      });
+    },
+    applyContactInfoToForm () {
+      if (!this.form) {
+        return;
+      }
+      if (!this.form.nickName && this.currentUserContact.nickName) {
+        this.$set(this.form, 'nickName', this.currentUserContact.nickName);
+      }
+      if (!this.form.phone && this.currentUserContact.phone) {
+        this.$set(this.form, 'phone', this.currentUserContact.phone);
+      }
     },
     // 取消按钮
     cancel () {
@@ -380,8 +412,12 @@ export default {
     /** 新增按钮操作 */
     handleAdd () {
       this.reset();
-      this.open = true;
-      this.title = "添加维修工单";
+      const openDialog = () => {
+        this.applyContactInfoToForm();
+        this.open = true;
+        this.title = "添加维修工单";
+      };
+      this.fetchCurrentUserProfile().finally(openDialog);
     },
     /** 修改按钮操作 */
     handleUpdate (row) {

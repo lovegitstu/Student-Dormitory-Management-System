@@ -1,6 +1,9 @@
 package com.springboot.system.mapper;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import org.apache.ibatis.annotations.Param;
 import com.springboot.system.domain.SysLogininfor;
 
 /**
@@ -39,4 +42,22 @@ public interface SysLogininforMapper
      * @return 结果
      */
     public int cleanLogininfor();
+
+    /**
+     * 统计指定时间范围内的登录记录数量
+     */
+    Long countLogininforByStatusBetween(@Param("status") String status,
+                                        @Param("startTime") Date startTime,
+                                        @Param("endTime") Date endTime);
+
+    /**
+     * 查询按日聚合的登录成功/失败趋势
+     */
+    List<Map<String, Object>> selectDailyLoginTrend(@Param("startTime") Date startTime,
+                                                    @Param("endTime") Date endTime);
+
+    /**
+     * 查询最近的失败登录记录
+     */
+    List<SysLogininfor> selectRecentFailedLogin(@Param("limit") int limit);
 }

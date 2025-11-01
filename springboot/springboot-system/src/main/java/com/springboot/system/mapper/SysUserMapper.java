@@ -1,5 +1,6 @@
 package com.springboot.system.mapper;
 
+import java.util.Date;
 import java.util.List;
 import org.apache.ibatis.annotations.Param;
 import com.springboot.common.core.domain.entity.SysUser;
@@ -124,4 +125,14 @@ public interface SysUserMapper
      * @return 结果
      */
     public SysUser checkEmailUnique(String email);
+
+    /**
+     * 统计系统用户总数
+     */
+    Long countAllUsers();
+
+    /**
+     * 统计指定时间段内新增的用户数量
+     */
+    Long countUsersCreatedBetween(@Param("startTime") Date startTime, @Param("endTime") Date endTime);
 }
